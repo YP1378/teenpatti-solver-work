@@ -1,2 +1,10 @@
 node_modules
 *.zip
+dist/
+screen-recognition/latest-*.png
+screen-recognition/debug-*.png
+screen-recognition/builtin-smoke-test.png
+screen-recognition/ui-state.json
+screen-recognition/builtin-font-templates/
+tools/builtin-smoke-test.js
+tools/ocr-rank-test.ps1

@@ -1,0 +1,29 @@
+{
+  "baseDir": ".",
+  "templateRoot": "./screen-recognition/templates",
+  "recognitionMode": "auto",
+  "cardRegions": [
+    { "x": 600, "y": 860, "width": 110, "height": 150 },
+    { "x": 720, "y": 860, "width": 110, "height": 150 },
+    { "x": 840, "y": 860, "width": 110, "height": 150 },
+    { "x": 960, "y": 860, "width": 110, "height": 150 }
+  ],
+  "rankRegion": { "x": 8, "y": 8, "width": 28, "height": 36 },
+  "suitRegion": { "x": 8, "y": 46, "width": 24, "height": 24 },
+  "preprocess": {
+    "rank": {
+      "width": 28,
+      "height": 36,
+      "threshold": 180,
+      "contrast": 0.35,
+      "invert": false
+    },
+    "suit": {
+      "width": 24,
+      "height": 24,
+      "threshold": 180,
+      "contrast": 0.35,
+      "invert": false
+    }
+  }
+}

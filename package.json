@@ -4,7 +4,11 @@
   "description": "Teen Patti Solver for Node.Js",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "cmd": "node cmd-game.js",
+    "play": "node cmd-game.js",
+    "screen-ui": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./screen-card-helper.ps1",
+    "build:portable": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./tools/build-portable.ps1"
   },
   "repository": {
     "type": "git",
@@ -17,6 +21,7 @@
   },
   "homepage": "https://github.com/WohligTechnology/teenpatti-solver#readme",
   "dependencies": {
+    "jimp": "^0.22.12",
     "js-combinatorics": "^0.5.2",
     "lodash": "^4.17.4"
   },
