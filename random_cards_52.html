@@ -1,0 +1,321 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+  <title>RANDOM.ORG - Playing Card Shuffler</title>
+  <meta name="viewport" content="width=device-width" />
+  <link rel="stylesheet" type="text/css" href="/css/style.css" media="all" />
+  <!--[if IE]>
+  <link rel="stylesheet" type="text/css" href="/css/iestyle.css" media="all" />
+  <![endif]-->
+<meta name="application-name" content="RANDOM.ORG" />
+<link rel="apple-touch-icon" sizes="72x72" href="//static.random.org/graphics/touch/app-touch-72x72.png" />
+<link rel="apple-touch-icon" sizes="76x76" href="//static.random.org/graphics/touch/app-touch-76x76.png" />
+<link rel="apple-touch-icon" sizes="114x114" href="//static.random.org/graphics/touch/app-touch-114x114.png" />
+<link rel="apple-touch-icon" sizes="120x120" href="//static.random.org/graphics/touch/app-touch-120x120.png" />
+<link rel="apple-touch-icon" sizes="144x144" href="//static.random.org/graphics/touch/app-touch-144x144.png" />
+<link rel="apple-touch-icon" sizes="152x152" href="//static.random.org/graphics/touch/app-touch-152x152.png" />
+<link rel="apple-touch-icon" href="//static.random.org/graphics/touch/app-touch-full.png" />
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="Keywords" content="true random numbers" />
+  <meta name="description" content="This page allows you to draw playing cards from randomly shuffled decks using true randomness, which for many purposes is better than the pseudo-random number algorithms typically used in computer programs." />
+  <meta name="author" content="Mads Haahr" />
+  <script type="text/javascript" src="/js/random.js"></script>
+  <script type="text/javascript" src="//static.random.org/lib/jquery-3.4.1/jquery-3.4.1.min.js"></script>
+  <script type="text/javascript" src="/js/simpledropdown.jquery.js"></script>
+</head>
+
+<body>
+  <div id="invisible">
+  <ul id="navigation">
+    <li><a href="/">Home</a></li>
+    <li><a href="/#games">Games</a>
+      <ul>
+        <li><a href="/quick-pick/">Lottery Quick Pick</a></li>
+        <li><a href="/keno/">Keno Quick Pick</a></li>
+        <li><a href="/coins/">Coin Flipper</a></li>
+        <li><a href="/dice/">Dice Roller</a></li>
+        <li><a href="/playing-cards/">Playing Card Shuffler</a></li>
+        <li><a href="/birdie-funds/">Birdie Fund Generator</a></li>
+      </ul>
+    </li>
+    <li><a href="/#numbers">Numbers</a>
+      <ul>
+        <li><a href="/integers/">Integers</a></li>
+        <li><a href="/sequences/">Sequences</a></li>
+        <li><a href="/integer-sets/">Integer Sets</a></li>
+        <li><a href="/gaussian-distributions/">Gaussian Numbers</a></li>
+        <li><a href="/decimal-fractions/">Decimal Fractions</a></li>
+        <li><a href="/bytes/">Raw Bytes</a></li>
+      </ul>
+    </li>
+    <li><a href="/#lists">Lists &amp; More</a>
+      <ul>
+        <li><a href="/lists/">List Randomizer</a></li>
+        <li><a href="/strings/">Strings</a></li>
+        <li><a href="/passwords/">Passwords</a></li>
+        <li><a href="/clock-times/">Clock Times</a></li>
+        <li><a href="/calendar-dates/">Calendar Dates</a></li>
+        <li><a href="/geographic-coordinates/">Geographic Coordinates</a></li>
+        <li><a href="/bitmaps/">Bitmaps</a></li>
+        <li><a href="/colors/hex">Hex Color Codes</a></li>
+        <li><a href="/files/">Pregenerated Files</a></li>
+        <li><a href="/jazz-scales/">Jazz Scales</a></li>
+        <li><a href="/audio-noise/">Pure White Audio Noise</a></li>
+        <li><a href="/lessness/">Samuel Beckett</a></li>
+      </ul>
+    </li>
+    <li><a href="/#draws">Drawings</a>
+      <ul>
+        <li><a href="/faq/#Q3.1">How to Pick a Winner (FREE)</a></li>
+        <li><a href="/draws/">Third-Party Draw Service</a></li>
+        <li><a href="/guides/draws/">Step by Step Guide</a></li>
+        <li><a href="/guides/video1/">Step by Step Video</a></li>
+        <li><a href="/draws/pricing/">Price Calculator</a></li>
+        <li><a href="/draws/records/">Public Records</a></li>
+        <li><a href="/draws/description/">Terms and Conditions</a></li>
+        <li><a href="/faq/#S5">Drawing FAQ</a></li>
+      </ul>
+    </li>
+    <li><a href="/#tools">Web Tools</a>
+      <ul>
+        <li><a href="/widgets/">Widgets for Your Pages</a></li>
+        <li><a href="https://api.random.org/">API for Automated Clients</a></li>
+        <li><a href="/clients/http/">Old API for Automated Clients</a></li>
+        <li><a href="/clients/">Old Guidelines for Automated Clients</a></li>
+        <li><a href="/banned-hosts/">Banned Hosts</a></li>
+      </ul>
+    </li>
+    <li><a href="/#statistics">Statistics</a>
+      <ul>
+        <li><a href="/statistics/">Real-Time Statistics</a></li>
+        <li><a href="/statistics/browser/">Graph Browser</a></li>
+        <li><a href="/analysis/">Testing Random Numbers</a></li>
+        <li><a href="/bit-tally/">Total Bit Tally</a></li>
+        <li><a href="/quota/">Your Quota</a></li>
+      </ul>
+    </li>
+    <li><a href="/testimonials/">Testimonials</a>
+      <ul>
+        <li><a href="/testimonials/lotteries/">Lotteries and Drawings</a></li>
+        <li><a href="/testimonials/games/">Games and Gambling</a></li>
+        <li><a href="/testimonials/sampling/">Random Sampling</a></li>
+        <li><a href="/testimonials/simulation/">Simulation and Modelling</a></li>
+        <li><a href="/testimonials/security/">Security</a></li>
+        <li><a href="/testimonials/arts/">The Arts</a></li>
+        <li><a href="/testimonials/miscellaneous/">Miscellaneous</a></li>
+      </ul>
+    </li>
+    <li><a href="/#learn">Learn More</a>
+      <ul>
+        <li><a href="/company/">About &amp; Contact</a></li>
+        <li><a href="/terms/">Terms and Conditions</a></li>
+        <li><a href="/faq/">FAQ</a></li>
+        <li><a href="/randomness/">Introduction to Randomness</a></li>
+        <li><a href="/history/">History of RANDOM.ORG</a></li>
+        <li><a href="/acknowledgements/">Acknowledgements</a></li>
+        <li><a href="/media/">Media and Scientific Citations</a></li>
+        <li><a href="/newsletter/">Newsletter</a></li>
+        <li><a href="/quotations/">Quotations about Randomness</a></li>
+        <li><a href="/news/">What's New!</a></li>
+      </ul>
+    </li>
+    <li><a href="/account/">Login</a></li>
+  </ul>
+  <div id="search">
+    <form action="https://www.random.org/search" method="get" target="_blank">
+      <div>
+        Search RANDOM.ORG<br />
+        <input type="text" name="q" size="16" />
+        <input type="submit" value="Search" />
+      </div>
+    </form>
+  </div>
+ 
+  <h1><span>True Random Number Service</span></h1>
+  <noscript><p style="background-color:#ffff90;padding: 0em .5em 0em .5em;font-size:.9em"><strong>Warning:</strong> Your browser does not support JavaScript &#8211; RANDOM.ORG may not work as expected</p></noscript>
+  <p style="background-color:#ffff90;padding: 0em .5em 0em .5em"><strong>Advisory:</strong> RANDOM.ORG is scheduling essential maintenance on Sunday, 19 April 2026 from 9.00-10.00am UTC [<a href='https://www.random.org/maintenance/2026-04-19'>more info</a>]</p>
+
+<style>  .btn { display: inline-block;
+  margin-bottom: 0;
+  font-weight: normal;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+  -ms-touch-action: manipulation;
+  touch-action: manipulation;
+  cursor: pointer;
+  background-image: none;
+  border: 1px solid transparent;
+  padding: 6px 12px;
+  font-size: 14px;
+  line-height: 1.42857143;
+  border-radius: 4px;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none; }
+ .btn-default {
+  color: #333333;
+  background-color: #ffffff;
+  border-color: #cccccc;
+ }
+ .btn-primary {
+   color:#ffffff;background-color: #428bca;border-color: #357ebd;
+   }
+.btn-xs,
+.btn-group-xs > .btn {
+  padding: 1px 5px;
+  font-size: 12px;
+  line-height: 1.5;
+  border-radius: 3px;
+}
+  </style>
+<div id="cookie-banner" style="width:100%;position:absolute;top:0;right:0;z-index:10000;border-bottom:1px solid #bce8f1;background-color:#d9edf7;display:none;">
+        <div style="margin: 0px 16px 16px 16px">
+          <p>
+            <strong>RANDOM.ORG Uses Cookies</strong>
+          </p>
+          <p>
+            We use cookies to remember your preferences and to analyze our traffic. We do not carry ads and will never sell your data to third parties.
+          </p>
+          <p>
+            <label class="checkbox-inline"><input type="checkbox" disabled="disabled" class="rdo-input rdo-input-disabled-onload" id="cookie-banner-necessary" value="1" checked="checked">Necessary</input></label>
+            <label class="checkbox-inline"><input type="checkbox" disabled="disabled" class="rdo-input" id="cookie-banner-preferences" value="1">Preferences</input></label>
+            <label class="checkbox-inline"><input type="checkbox" disabled="disabled" class="rdo-input" id="cookie-banner-statistics" value="1">Statistics</input></label>
+          </p>
+          <p style="margin-top:-.3em;margin-bottom:1em;">
+            Please see our <a href="https://www.random.org/terms/2020-08-01/cookies">Cookie Policy</a> or visit our <a href="https://www.random.org/privacy">Privacy Dashboard</a> for more information.
+          </p>
+          <span style="white-space:nowrap;">
+            <button class="btn btn-default btn-xs rdo-input" disabled="disabled" onclick="cookieBanner('selected');">Allow Selected</button>
+            <button class="btn btn-default btn-xs rdo-input" disabled="disabled" onclick="cookieBanner('all');">Allow All</button>
+          </span>
+        </div>
+      </div>
+      
+  <h2>Playing Card Shuffler</h2>
+
+<p>Here are your 52 cards, drawn from a total of 52:</p>
+<p>
+<img src="30.png" width="72" height="96" alt="Seven of Spades" title="Seven of Spades" /><!-- 29 -> 30 -->
+<img src="9.png" width="72" height="96" alt="Queen of Clubs" title="Queen of Clubs" /><!-- 8 -> 9 -->
+<img src="10.png" width="72" height="96" alt="Queen of Spades" title="Queen of Spades" /><!-- 9 -> 10 -->
+<img src="44.png" width="72" height="96" alt="Four of Diamonds" title="Four of Diamonds" /><!-- 43 -> 44 -->
+<img src="48.png" width="72" height="96" alt="Three of Diamonds" title="Three of Diamonds" /><!-- 47 -> 48 -->
+<img src="38.png" width="72" height="96" alt="Five of Spades" title="Five of Spades" /><!-- 37 -> 38 -->
+<img src="5.png" width="72" height="96" alt="King of Clubs" title="King of Clubs" /><!-- 4 -> 5 -->
+<img src="1.png" width="72" height="96" alt="Ace of Clubs" title="Ace of Clubs" /><!-- 0 -> 1 -->
+<img src="33.png" width="72" height="96" alt="Six of Clubs" title="Six of Clubs" /><!-- 32 -> 33 -->
+<img src="21.png" width="72" height="96" alt="Nine of Clubs" title="Nine of Clubs" /><!-- 20 -> 21 -->
+<img src="26.png" width="72" height="96" alt="Eight of Spades" title="Eight of Spades" /><!-- 25 -> 26 -->
+<img src="8.png" width="72" height="96" alt="King of Diamonds" title="King of Diamonds" /><!-- 7 -> 8 -->
+<img src="18.png" width="72" height="96" alt="Ten of Spades" title="Ten of Spades" /><!-- 17 -> 18 -->
+<img src="34.png" width="72" height="96" alt="Six of Spades" title="Six of Spades" /><!-- 33 -> 34 -->
+<img src="41.png" width="72" height="96" alt="Four of Clubs" title="Four of Clubs" /><!-- 40 -> 41 -->
+<img src="37.png" width="72" height="96" alt="Five of Clubs" title="Five of Clubs" /><!-- 36 -> 37 -->
+<img src="3.png" width="72" height="96" alt="Ace of Hearts" title="Ace of Hearts" /><!-- 2 -> 3 -->
+<img src="6.png" width="72" height="96" alt="King of Spades" title="King of Spades" /><!-- 5 -> 6 -->
+<img src="12.png" width="72" height="96" alt="Queen of Diamonds" title="Queen of Diamonds" /><!-- 11 -> 12 -->
+<img src="27.png" width="72" height="96" alt="Eight of Hearts" title="Eight of Hearts" /><!-- 26 -> 27 -->
+<img src="49.png" width="72" height="96" alt="Two of Clubs" title="Two of Clubs" /><!-- 48 -> 49 -->
+<img src="51.png" width="72" height="96" alt="Two of Hearts" title="Two of Hearts" /><!-- 50 -> 51 -->
+<img src="2.png" width="72" height="96" alt="Ace of Spades" title="Ace of Spades" /><!-- 1 -> 2 -->
+<img src="22.png" width="72" height="96" alt="Nine of Spades" title="Nine of Spades" /><!-- 21 -> 22 -->
+<img src="43.png" width="72" height="96" alt="Four of Hearts" title="Four of Hearts" /><!-- 42 -> 43 -->
+<img src="32.png" width="72" height="96" alt="Seven of Diamonds" title="Seven of Diamonds" /><!-- 31 -> 32 -->
+<img src="47.png" width="72" height="96" alt="Three of Hearts" title="Three of Hearts" /><!-- 46 -> 47 -->
+<img src="28.png" width="72" height="96" alt="Eight of Diamonds" title="Eight of Diamonds" /><!-- 27 -> 28 -->
+<img src="46.png" width="72" height="96" alt="Three of Spades" title="Three of Spades" /><!-- 45 -> 46 -->
+<img src="52.png" width="72" height="96" alt="Two of Diamonds" title="Two of Diamonds" /><!-- 51 -> 52 -->
+<img src="29.png" width="72" height="96" alt="Seven of Clubs" title="Seven of Clubs" /><!-- 28 -> 29 -->
+<img src="50.png" width="72" height="96" alt="Two of Spades" title="Two of Spades" /><!-- 49 -> 50 -->
+<img src="11.png" width="72" height="96" alt="Queen of Hearts" title="Queen of Hearts" /><!-- 10 -> 11 -->
+<img src="45.png" width="72" height="96" alt="Three of Clubs" title="Three of Clubs" /><!-- 44 -> 45 -->
+<img src="40.png" width="72" height="96" alt="Five of Diamonds" title="Five of Diamonds" /><!-- 39 -> 40 -->
+<img src="20.png" width="72" height="96" alt="Ten of Diamonds" title="Ten of Diamonds" /><!-- 19 -> 20 -->
+<img src="42.png" width="72" height="96" alt="Four of Spades" title="Four of Spades" /><!-- 41 -> 42 -->
+<img src="36.png" width="72" height="96" alt="Six of Diamonds" title="Six of Diamonds" /><!-- 35 -> 36 -->
+<img src="4.png" width="72" height="96" alt="Ace of Diamonds" title="Ace of Diamonds" /><!-- 3 -> 4 -->
+<img src="39.png" width="72" height="96" alt="Five of Hearts" title="Five of Hearts" /><!-- 38 -> 39 -->
+<img src="35.png" width="72" height="96" alt="Six of Hearts" title="Six of Hearts" /><!-- 34 -> 35 -->
+<img src="16.png" width="72" height="96" alt="Jack of Diamonds" title="Jack of Diamonds" /><!-- 15 -> 16 -->
+<img src="24.png" width="72" height="96" alt="Nine of Diamonds" title="Nine of Diamonds" /><!-- 23 -> 24 -->
+<img src="17.png" width="72" height="96" alt="Ten of Clubs" title="Ten of Clubs" /><!-- 16 -> 17 -->
+<img src="31.png" width="72" height="96" alt="Seven of Hearts" title="Seven of Hearts" /><!-- 30 -> 31 -->
+<img src="13.png" width="72" height="96" alt="Jack of Clubs" title="Jack of Clubs" /><!-- 12 -> 13 -->
+<img src="14.png" width="72" height="96" alt="Jack of Spades" title="Jack of Spades" /><!-- 13 -> 14 -->
+<img src="25.png" width="72" height="96" alt="Eight of Clubs" title="Eight of Clubs" /><!-- 24 -> 25 -->
+<img src="19.png" width="72" height="96" alt="Ten of Hearts" title="Ten of Hearts" /><!-- 18 -> 19 -->
+<img src="7.png" width="72" height="96" alt="King of Hearts" title="King of Hearts" /><!-- 6 -> 7 -->
+<img src="23.png" width="72" height="96" alt="Nine of Hearts" title="Nine of Hearts" /><!-- 22 -> 23 -->
+<img src="15.png" width="72" height="96" alt="Jack of Hearts" title="Jack of Hearts" /><!-- 14 -> 15 -->
+</p>
+<p>Timestamp: 2026-04-17 08:27:48 UTC</p>
+
+    <p></p>
+    <form method="get" action="">
+      <input type="hidden" name="cards" value="52" />
+      <input type="hidden" name="decks" value="1" />
+<input type="hidden" name="spades" value="on" />
+<input type="hidden" name="hearts" value="on" />
+<input type="hidden" name="diamonds" value="on" />
+<input type="hidden" name="clubs" value="on" />
+<input type="hidden" name="aces" value="on" />
+<input type="hidden" name="twos" value="on" />
+<input type="hidden" name="threes" value="on" />
+<input type="hidden" name="fours" value="on" />
+<input type="hidden" name="fives" value="on" />
+<input type="hidden" name="sixes" value="on" />
+<input type="hidden" name="sevens" value="on" />
+<input type="hidden" name="eights" value="on" />
+<input type="hidden" name="nines" value="on" />
+<input type="hidden" name="tens" value="on" />
+<input type="hidden" name="jacks" value="on" />
+<input type="hidden" name="queens" value="on" />
+<input type="hidden" name="kings" value="on" />
+      <input type="submit" value="Again!" />
+      <input type="button" onclick="history.go(-1);" value="Go Back" />
+    </form>
+
+
+  <p></p>
+  <div class="ruler"></div>
+
+<div style="text-align:center;">
+  <div>&copy; 1998-2026 RANDOM.ORG<br />Follow us: <a href="https://x.com/RandomOrg">X</a> | <a href="https://bsky.app/profile/random.org">BlueSky</a> <!-- | <a href="https://www.linkedin.com/company/random.org/">LinkedIn</a> -->  <br /><a href="/terms">Terms and Conditions</a><br /><a href="https://www.random.org/company">About Us</a></div>
+</div>
+
+    <script>
+      function cookieBanner(clickedButton) {
+        var consentData = null;
+        if (clickedButton == "selected") {
+          consentData = [true, $('#cookie-banner-preferences').is(':checked'), $('#cookie-banner-statistics').is(':checked')];
+        } else {
+          consentData = [true, true, true];
+        }
+        createCookie('RDOPRIVACY', JSON.stringify(consentData), '/', 365);
+        $('#cookie-banner').fadeOut(800);
+        $.post(
+          "https://www.random.org/privacy/cookie-consent",
+          { consentData : JSON.stringify(consentData), sessionId: readCookie("RDOSESSION") },
+          function(data) {
+            // alert("page content: " + data);
+          }
+        );
+      }
+      /* enable all editable form fields when the page is ready */
+      $(document).ready(function() {
+        $(".rdo-input").attr("disabled", false);
+        $(".rdo-input-disabled-onload").attr("disabled", true);
+      });
+      /* when ready, enable submit buttons - still needed? */
+      $(document).ready(function() { $(".rdo-submit").removeClass("disabled"); });
+      /* if we have a cookie banner, show it */
+      if (document.getElementById("cookie-banner")) {
+        $("#cookie-banner").fadeIn(800);
+      }
+    </script>
+      
+  </body>
+</html>

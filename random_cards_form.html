@@ -1,0 +1,331 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+  <title>RANDOM.ORG - Playing Card Shuffler</title>
+  <meta name="viewport" content="width=device-width" />
+  <link rel="stylesheet" type="text/css" href="/css/style.css" media="all" />
+  <!--[if IE]>
+  <link rel="stylesheet" type="text/css" href="/css/iestyle.css" media="all" />
+  <![endif]-->
+<meta name="application-name" content="RANDOM.ORG" />
+<link rel="apple-touch-icon" sizes="72x72" href="//static.random.org/graphics/touch/app-touch-72x72.png" />
+<link rel="apple-touch-icon" sizes="76x76" href="//static.random.org/graphics/touch/app-touch-76x76.png" />
+<link rel="apple-touch-icon" sizes="114x114" href="//static.random.org/graphics/touch/app-touch-114x114.png" />
+<link rel="apple-touch-icon" sizes="120x120" href="//static.random.org/graphics/touch/app-touch-120x120.png" />
+<link rel="apple-touch-icon" sizes="144x144" href="//static.random.org/graphics/touch/app-touch-144x144.png" />
+<link rel="apple-touch-icon" sizes="152x152" href="//static.random.org/graphics/touch/app-touch-152x152.png" />
+<link rel="apple-touch-icon" href="//static.random.org/graphics/touch/app-touch-full.png" />
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="Keywords" content="true random numbers" />
+  <meta name="description" content="This page allows you to draw playing cards from randomly shuffled decks using true randomness, which for many purposes is better than the pseudo-random number algorithms typically used in computer programs." />
+  <meta name="author" content="Mads Haahr" />
+  <script type="text/javascript" src="/js/random.js"></script>
+  <script type="text/javascript" src="//static.random.org/lib/jquery-3.4.1/jquery-3.4.1.min.js"></script>
+  <script type="text/javascript" src="/js/simpledropdown.jquery.js"></script>
+</head>
+
+<body>
+  <div id="invisible">
+  <ul id="navigation">
+    <li><a href="/">Home</a></li>
+    <li><a href="/#games">Games</a>
+      <ul>
+        <li><a href="/quick-pick/">Lottery Quick Pick</a></li>
+        <li><a href="/keno/">Keno Quick Pick</a></li>
+        <li><a href="/coins/">Coin Flipper</a></li>
+        <li><a href="/dice/">Dice Roller</a></li>
+        <li><a href="/playing-cards/">Playing Card Shuffler</a></li>
+        <li><a href="/birdie-funds/">Birdie Fund Generator</a></li>
+      </ul>
+    </li>
+    <li><a href="/#numbers">Numbers</a>
+      <ul>
+        <li><a href="/integers/">Integers</a></li>
+        <li><a href="/sequences/">Sequences</a></li>
+        <li><a href="/integer-sets/">Integer Sets</a></li>
+        <li><a href="/gaussian-distributions/">Gaussian Numbers</a></li>
+        <li><a href="/decimal-fractions/">Decimal Fractions</a></li>
+        <li><a href="/bytes/">Raw Bytes</a></li>
+      </ul>
+    </li>
+    <li><a href="/#lists">Lists &amp; More</a>
+      <ul>
+        <li><a href="/lists/">List Randomizer</a></li>
+        <li><a href="/strings/">Strings</a></li>
+        <li><a href="/passwords/">Passwords</a></li>
+        <li><a href="/clock-times/">Clock Times</a></li>
+        <li><a href="/calendar-dates/">Calendar Dates</a></li>
+        <li><a href="/geographic-coordinates/">Geographic Coordinates</a></li>
+        <li><a href="/bitmaps/">Bitmaps</a></li>
+        <li><a href="/colors/hex">Hex Color Codes</a></li>
+        <li><a href="/files/">Pregenerated Files</a></li>
+        <li><a href="/jazz-scales/">Jazz Scales</a></li>
+        <li><a href="/audio-noise/">Pure White Audio Noise</a></li>
+        <li><a href="/lessness/">Samuel Beckett</a></li>
+      </ul>
+    </li>
+    <li><a href="/#draws">Drawings</a>
+      <ul>
+        <li><a href="/faq/#Q3.1">How to Pick a Winner (FREE)</a></li>
+        <li><a href="/draws/">Third-Party Draw Service</a></li>
+        <li><a href="/guides/draws/">Step by Step Guide</a></li>
+        <li><a href="/guides/video1/">Step by Step Video</a></li>
+        <li><a href="/draws/pricing/">Price Calculator</a></li>
+        <li><a href="/draws/records/">Public Records</a></li>
+        <li><a href="/draws/description/">Terms and Conditions</a></li>
+        <li><a href="/faq/#S5">Drawing FAQ</a></li>
+      </ul>
+    </li>
+    <li><a href="/#tools">Web Tools</a>
+      <ul>
+        <li><a href="/widgets/">Widgets for Your Pages</a></li>
+        <li><a href="https://api.random.org/">API for Automated Clients</a></li>
+        <li><a href="/clients/http/">Old API for Automated Clients</a></li>
+        <li><a href="/clients/">Old Guidelines for Automated Clients</a></li>
+        <li><a href="/banned-hosts/">Banned Hosts</a></li>
+      </ul>
+    </li>
+    <li><a href="/#statistics">Statistics</a>
+      <ul>
+        <li><a href="/statistics/">Real-Time Statistics</a></li>
+        <li><a href="/statistics/browser/">Graph Browser</a></li>
+        <li><a href="/analysis/">Testing Random Numbers</a></li>
+        <li><a href="/bit-tally/">Total Bit Tally</a></li>
+        <li><a href="/quota/">Your Quota</a></li>
+      </ul>
+    </li>
+    <li><a href="/testimonials/">Testimonials</a>
+      <ul>
+        <li><a href="/testimonials/lotteries/">Lotteries and Drawings</a></li>
+        <li><a href="/testimonials/games/">Games and Gambling</a></li>
+        <li><a href="/testimonials/sampling/">Random Sampling</a></li>
+        <li><a href="/testimonials/simulation/">Simulation and Modelling</a></li>
+        <li><a href="/testimonials/security/">Security</a></li>
+        <li><a href="/testimonials/arts/">The Arts</a></li>
+        <li><a href="/testimonials/miscellaneous/">Miscellaneous</a></li>
+      </ul>
+    </li>
+    <li><a href="/#learn">Learn More</a>
+      <ul>
+        <li><a href="/company/">About &amp; Contact</a></li>
+        <li><a href="/terms/">Terms and Conditions</a></li>
+        <li><a href="/faq/">FAQ</a></li>
+        <li><a href="/randomness/">Introduction to Randomness</a></li>
+        <li><a href="/history/">History of RANDOM.ORG</a></li>
+        <li><a href="/acknowledgements/">Acknowledgements</a></li>
+        <li><a href="/media/">Media and Scientific Citations</a></li>
+        <li><a href="/newsletter/">Newsletter</a></li>
+        <li><a href="/quotations/">Quotations about Randomness</a></li>
+        <li><a href="/news/">What's New!</a></li>
+      </ul>
+    </li>
+    <li><a href="/account/">Login</a></li>
+  </ul>
+  <div id="search">
+    <form action="https://www.random.org/search" method="get" target="_blank">
+      <div>
+        Search RANDOM.ORG<br />
+        <input type="text" name="q" size="16" />
+        <input type="submit" value="Search" />
+      </div>
+    </form>
+  </div>
+ 
+  <h1><span>True Random Number Service</span></h1>
+  <noscript><p style="background-color:#ffff90;padding: 0em .5em 0em .5em;font-size:.9em"><strong>Warning:</strong> Your browser does not support JavaScript &#8211; RANDOM.ORG may not work as expected</p></noscript>
+  <p style="background-color:#ffff90;padding: 0em .5em 0em .5em"><strong>Advisory:</strong> RANDOM.ORG is scheduling essential maintenance on Sunday, 19 April 2026 from 9.00-10.00am UTC [<a href='https://www.random.org/maintenance/2026-04-19'>more info</a>]</p>
+
+<style>  .btn { display: inline-block;
+  margin-bottom: 0;
+  font-weight: normal;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+  -ms-touch-action: manipulation;
+  touch-action: manipulation;
+  cursor: pointer;
+  background-image: none;
+  border: 1px solid transparent;
+  padding: 6px 12px;
+  font-size: 14px;
+  line-height: 1.42857143;
+  border-radius: 4px;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none; }
+ .btn-default {
+  color: #333333;
+  background-color: #ffffff;
+  border-color: #cccccc;
+ }
+ .btn-primary {
+   color:#ffffff;background-color: #428bca;border-color: #357ebd;
+   }
+.btn-xs,
+.btn-group-xs > .btn {
+  padding: 1px 5px;
+  font-size: 12px;
+  line-height: 1.5;
+  border-radius: 3px;
+}
+  </style>
+<div id="cookie-banner" style="width:100%;position:absolute;top:0;right:0;z-index:10000;border-bottom:1px solid #bce8f1;background-color:#d9edf7;display:none;">
+        <div style="margin: 0px 16px 16px 16px">
+          <p>
+            <strong>RANDOM.ORG Uses Cookies</strong>
+          </p>
+          <p>
+            We use cookies to remember your preferences and to analyze our traffic. We do not carry ads and will never sell your data to third parties.
+          </p>
+          <p>
+            <label class="checkbox-inline"><input type="checkbox" disabled="disabled" class="rdo-input rdo-input-disabled-onload" id="cookie-banner-necessary" value="1" checked="checked">Necessary</input></label>
+            <label class="checkbox-inline"><input type="checkbox" disabled="disabled" class="rdo-input" id="cookie-banner-preferences" value="1">Preferences</input></label>
+            <label class="checkbox-inline"><input type="checkbox" disabled="disabled" class="rdo-input" id="cookie-banner-statistics" value="1">Statistics</input></label>
+          </p>
+          <p style="margin-top:-.3em;margin-bottom:1em;">
+            Please see our <a href="https://www.random.org/terms/2020-08-01/cookies">Cookie Policy</a> or visit our <a href="https://www.random.org/privacy">Privacy Dashboard</a> for more information.
+          </p>
+          <span style="white-space:nowrap;">
+            <button class="btn btn-default btn-xs rdo-input" disabled="disabled" onclick="cookieBanner('selected');">Allow Selected</button>
+            <button class="btn btn-default btn-xs rdo-input" disabled="disabled" onclick="cookieBanner('all');">Allow All</button>
+          </span>
+        </div>
+      </div>
+      
+  <h2>Playing Card Shuffler</h2>
+
+
+  <p>This form allows you to draw playing cards from randomly shuffled decks.  The
+  randomness comes from atmospheric noise, which for many purposes
+  is better than the pseudo-random number algorithms typically
+  used in computer programs.</p>
+
+  <form method="get" action="">
+
+  <h3>Step 1: Number of Cards</h3>
+
+  <p>Draw
+  <input type="text" name="cards" value="1" size="2" maxlength="6" />
+  card(s) from
+  <select name="decks">
+    <option value="1" selected="selected">1</option>
+    <option value="2">2</option>
+    <option value="3">3</option>
+    <option value="4">4</option>
+    <option value="5">5</option>
+    <option value="6">6</option>
+    <option value="7">7</option>
+    <option value="8">8</option>
+  </select>
+  shuffled deck(s)</p>
+
+
+  <h3>Step 2: Deck Configuration</h3>
+
+  <p></p>
+
+  <table cellpadding="0" cellspacing="0" border="0">
+
+    <tr><td colspan="5"><p style="margin-top:0;margin-bottom:0;">Which suits should be included?</p></td></tr>
+    <tr>
+      <td style="width: 20%;"><input class="indented" type="checkbox" name="spades" checked="checked" /> Spades (&spades;)</td>
+      <td style="width: 20%;"><input class="indented" type="checkbox" name="hearts" checked="checked" /> Hearts (<span style="color:red">&hearts;</span>)</td>
+      <td style="width: 20%;"><input class="indented" type="checkbox" name="diamonds" checked="checked" /> Diamonds (<span style="color:red">&diams;</span>)</td>
+      <td style="width: 20%;"><input class="indented" type="checkbox" name="clubs" checked="checked" /> Clubs (&clubs;)</td>
+    </tr>
+
+    <tr><td colspan="5"><p style="margin-top:.5em;margin-bottom:0;">Which cards should be included?</p></td></tr>
+    <tr>
+      <td style="width: 20%;"><input class="indented" type="checkbox" name="aces" checked="checked" /> Aces</td>
+      <td style="width: 20%;"><input class="indented" type="checkbox" name="twos" checked="checked" /> Twos</td>
+      <td style="width: 20%;"><input class="indented" type="checkbox" name="threes" checked="checked" /> Threes</td>
+      <td style="width: 20%;"><input class="indented" type="checkbox" name="fours" checked="checked" /> Fours</td>
+      <td style="width: 20%;"><input class="indented" type="checkbox" name="fives" checked="checked" /> Fives</td>
+    </tr>
+    <tr>
+      <td style="width: 20%;"><input class="indented" type="checkbox" name="sixes" checked="checked" /> Sixes</td>
+      <td style="width: 20%;"><input class="indented" type="checkbox" name="sevens" checked="checked" /> Sevens</td>
+      <td style="width: 20%;"><input class="indented" type="checkbox" name="eights" checked="checked" /> Eights</td>
+      <td style="width: 20%;"><input class="indented" type="checkbox" name="nines" checked="checked" /> Nines</td>
+      <td style="width: 20%;"><input class="indented" type="checkbox" name="tens" checked="checked" /> Tens</td>
+    </tr>
+    <tr>
+      <td style="width: 20%;"><input class="indented" type="checkbox" name="jacks" checked="checked" /> Jacks</td>
+      <td style="width: 20%;"><input class="indented" type="checkbox" name="queens" checked="checked" /> Queens</td>
+      <td style="width: 20%;"><input class="indented" type="checkbox" name="kings" checked="checked" /> Kings</td>
+    </tr>
+
+    <tr><td colspan="5"><p style="margin-top:.5em;margin-bottom:0;">Do you want to include jokers?</p></td></tr>
+
+    <tr>
+      <td style="width: 20%;"><input class="indented" type="checkbox" name="bjoker" /> Black Joker</td>
+      <td style="width: 20%;"><input class="indented" type="checkbox" name="rjoker" /> Red Joker</td>
+    </tr>
+  </table>
+
+  <p></p>
+
+
+  <h3>Step 3: Display Options</h3>
+
+  <p>Your cards will be shown in the order drawn.  You can choose from the following extra options:<br />
+    <input class="indented" type="checkbox" name="remaining" checked="checked" /> Show remaining cards face down<br />
+    <input class="indented" type="checkbox" name="text" /> Show cards as text instead of images<br />
+  </p>
+
+
+  <h3>Step 4: Go!</h3>
+
+  <p>Be patient!  It may take a little while to draw your cards...</p>
+
+  <p>
+    <input type="submit" value="Draw Cards" />
+    <input type="reset" value="Reset Form" />
+  </p>
+
+  <p>Thanks to <a href="http://www.jfitz.com/cards/">John Fitzgibbon</a> for making the playing card images available!</p>
+
+  </form>
+
+  <p></p>
+  <div class="ruler"></div>
+
+<div style="text-align:center;">
+  <div>&copy; 1998-2026 RANDOM.ORG<br />Follow us: <a href="https://x.com/RandomOrg">X</a> | <a href="https://bsky.app/profile/random.org">BlueSky</a> <!-- | <a href="https://www.linkedin.com/company/random.org/">LinkedIn</a> -->  <br /><a href="/terms">Terms and Conditions</a><br /><a href="https://www.random.org/company">About Us</a></div>
+</div>
+
+    <script>
+      function cookieBanner(clickedButton) {
+        var consentData = null;
+        if (clickedButton == "selected") {
+          consentData = [true, $('#cookie-banner-preferences').is(':checked'), $('#cookie-banner-statistics').is(':checked')];
+        } else {
+          consentData = [true, true, true];
+        }
+        createCookie('RDOPRIVACY', JSON.stringify(consentData), '/', 365);
+        $('#cookie-banner').fadeOut(800);
+        $.post(
+          "https://www.random.org/privacy/cookie-consent",
+          { consentData : JSON.stringify(consentData), sessionId: readCookie("RDOSESSION") },
+          function(data) {
+            // alert("page content: " + data);
+          }
+        );
+      }
+      /* enable all editable form fields when the page is ready */
+      $(document).ready(function() {
+        $(".rdo-input").attr("disabled", false);
+        $(".rdo-input-disabled-onload").attr("disabled", true);
+      });
+      /* when ready, enable submit buttons - still needed? */
+      $(document).ready(function() { $(".rdo-submit").removeClass("disabled"); });
+      /* if we have a cookie banner, show it */
+      if (document.getElementById("cookie-banner")) {
+        $("#cookie-banner").fadeIn(800);
+      }
+    </script>
+      
+  </body>
+</html>
