@@ -80,6 +80,41 @@
 
 本节回答一个问题：**“我要改某个功能，先去哪个文件？”**
 
+### 0. 架构分层总览
+- **第 1 层：规则与评分核心**
+  - `cards.js`：牌码解析、点数/花色映射、整副牌枚举。
+  - `index.js`：核心牌型评分、4/5 选 3 策略、结构化诊断结果。
+  - `getWinner.js`：多手牌比较与胜负判断。
+- **第 2 层：交互与编排入口**
+  - `cmd-game.js`：命令行试玩入口，负责发牌、交互、展示最佳策略。
+  - `app.js`：最小 API 示例，用来演示求解器的基本调用方式。
+  - `screen-recognition/ui-recognize.js`：桌面助手与 Node 求解/识牌能力之间的桥接层。
+- **第 3 层：屏幕识牌引擎**
+  - `screen-recognition/index.js`：识牌主引擎，负责区域归一化、模板加载、候选融合、后端回退。
+  - `screen-recognition/builtin-glyphs.js`：内置字模，作为无模板或低模板覆盖时的补充证据源。
+  - `screen-recognition/opencv-recognize.py`：Python/OpenCV 增强后端，和 JS 识别链路并行融合。
+- **第 4 层：素材与模板流转**
+  - `screen-recognition/bootstrap-templates.js`：基于人工确认牌面快速录入模板。
+  - `screen-recognition/capture-hand-region-sample.js`：按当前 UI 保存的区域自动二次截图。
+  - `screen-recognition/auto-collect-material-sample.js`：自动连拍、择优、投票纠偏、自修直入库。
+  - `screen-recognition/import-strip-templates.py`：把横向素材条拆成 `card/rank/suit` 三类素材并去重。
+- **第 5 层：Windows 助手与打包分发**
+  - `screen-card-helper.ps1` / `屏幕识牌助手.ps1`：WinForms 桌面助手、自动点击、挂机控制。
+  - `启动屏幕识牌助手.vbs`：隐藏 PowerShell 窗口的双击启动器。
+  - `tools/build-portable.ps1` + `runtime/` + `dist/`：便携版打包与运行时分发。
+
+### 0.1 关键调用链
+- **命令行求解链路**：`cmd-game.js` → `index.js` → `cards.js` / `getWinner.js`
+- **桌面识牌链路**：`screen-card-helper.ps1` → `screen-recognition/ui-recognize.js` → `index.js` → `screen-recognition/index.js` → `opencv-recognize.py`（可选）
+- **自动采集链路**：`screen-card-helper.ps1` 或 `npm run collect:auto` → `screen-recognition/auto-collect-material-sample.js` → `screen-recognition/import-strip-templates.py` → `materials/` 与 `templates/`
+- **便携分发链路**：`构建便携版.cmd` → `tools/build-portable.ps1` → `dist/炸金花助手便携版`
+
+### 0.2 识别层职责边界
+- `index.js` 负责“识别完成后如何求解”，以及“手牌区域如何转换成 card/rank/suit 的识别配置”。
+- `screen-recognition/index.js` 负责“如何从图像里得到牌码候选”，不要把纯求解规则继续塞回这里。
+- `screen-card-helper.ps1` 负责“用户操作与自动点击”，不要在这里复制一套牌型规则。
+- `templates/` 是识别证据库，`materials/` 是素材与审核沉淀区，两者职责不要混用。
+
 ### 1. 策略求解主入口
 - `index.js`
   - 项目总入口
@@ -147,15 +182,25 @@
 - `构建便携版.cmd`
   - 打包入口命令
 
-### 9. 运行态与输出文件
+### 9. 运行态、素材与产物
 - `screen-recognition/ui-state.json`
   - 当前 UI 选择的手牌区域、牌数、出牌点
+  - 这是“运行配置”，不是无用缓存，不要随手挪走
 - `screen-recognition/latest-screen.png`
   - 最近一次截图
 - `screen-recognition/latest-hand-region.png`
   - 最近一次手牌区域预览
+- `screen-recognition/debug-*.png` / `screen-recognition/last-*.json` / `screen-recognition/_last-ui-output.json`
+  - 调试产物与最近一次运行输出
+  - 可以归档搬走，不属于核心源码
+- `screen-recognition/materials/inbox/*.png`
+  - 自动采集阶段的原始截图缓存
+  - 属于可归档的中间产物，不是最终模板
 - `screen-recognition/materials/manifests/*.pending.json`
   - 自动采集后置信度不足的待审核样本清单
+- `dist/`
+  - 便携版构建产物
+  - 不是开发入口，可以整体搬走，需要时重新打包生成
 
 ### 10. 需求到代码的快速映射
 
