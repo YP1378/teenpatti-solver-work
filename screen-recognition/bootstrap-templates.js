@@ -68,6 +68,7 @@ async function main() {
     const args = parseArgs(process.argv.slice(2));
     const projectRoot = path.resolve(__dirname, "..");
     const regionFile = path.resolve(projectRoot, args["region-file"] || "./screen-recognition/ui-state.json");
+    const jsonOutPath = args["json-out"] ? path.resolve(projectRoot, args["json-out"]) : undefined;
     const cards = parseCardCodes(args.cards);
     const state = readJson(regionFile);
     const handRegion = state.handRegion || state.region || state;
@@ -88,8 +89,10 @@ async function main() {
 
     const rankDir = path.resolve(projectRoot, "./screen-recognition/templates/ranks");
     const suitDir = path.resolve(projectRoot, "./screen-recognition/templates/suits");
+    const cardDir = path.resolve(projectRoot, "./screen-recognition/templates/cards");
     ensureDir(rankDir);
     ensureDir(suitDir);
+    ensureDir(cardDir);
 
     const written = [];
     for (let index = 0; index < cards.length; index += 1) {
@@ -112,23 +115,32 @@ async function main() {
 
         const rankPath = getNextTemplatePath(rankDir, rankCode);
         const suitPath = getNextTemplatePath(suitDir, suitCode);
+        const cardPath = getNextTemplatePath(cardDir, cardCode);
 
         await screenshot.clone().crop(rankRegion.x, rankRegion.y, rankRegion.width, rankRegion.height).writeAsync(rankPath);
         await screenshot.clone().crop(suitRegion.x, suitRegion.y, suitRegion.width, suitRegion.height).writeAsync(suitPath);
+        await screenshot.clone().crop(cardRegion.x, cardRegion.y, cardRegion.width, cardRegion.height).writeAsync(cardPath);
 
         written.push({
             card: cardCode,
             rankTemplate: rankPath,
-            suitTemplate: suitPath
+            suitTemplate: suitPath,
+            cardTemplate: cardPath
         });
     }
 
-    process.stdout.write(JSON.stringify({
+    const payload = {
         ok: true,
         cardCount: cardCount,
         written: written,
         screenshotPath: screenPath
-    }, null, 2));
+    };
+    const jsonText = JSON.stringify(payload, null, 2);
+    if (jsonOutPath) {
+        fs.mkdirSync(path.dirname(jsonOutPath), { recursive: true });
+        fs.writeFileSync(jsonOutPath, jsonText, "utf8");
+    }
+    process.stdout.write(jsonText);
 }
 
 main().catch(function (error) {

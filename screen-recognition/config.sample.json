@@ -1,7 +1,10 @@
 {
   "baseDir": ".",
   "templateRoot": "./screen-recognition/templates",
+  "cardTemplatesDir": "./screen-recognition/templates/cards",
+  "builtinFontTemplateRoot": "./screen-recognition/builtin-font-templates",
   "recognitionMode": "auto",
+  "recognitionBackend": "auto",
   "cardRegions": [
     { "x": 600, "y": 860, "width": 110, "height": 150 },
     { "x": 720, "y": 860, "width": 110, "height": 150 },
@@ -24,6 +27,11 @@
       "threshold": 180,
       "contrast": 0.35,
       "invert": false
+    },
+    "card": {
+      "width": 110,
+      "height": 150,
+      "contrast": 0.12
     }
   }
 }

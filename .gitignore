@@ -1,10 +1,17 @@
 node_modules
 *.zip
 dist/
+screen-recognition/__pycache__/
 screen-recognition/latest-*.png
 screen-recognition/debug-*.png
 screen-recognition/builtin-smoke-test.png
 screen-recognition/ui-state.json
 screen-recognition/builtin-font-templates/
+screen-recognition/_last-ui-output.json
+screen-recognition/last-*.json
+screen-recognition/last-*.log
+screen-recognition/manual-json-out.json
+screen-recognition/materials/inbox/*.png
+screen-recognition/materials/manifests/*.pending.json
 tools/builtin-smoke-test.js
 tools/ocr-rank-test.ps1

@@ -79,6 +79,15 @@ function Save-UiState($region, [int]$cardCount, $playButtonPoint) {
     [System.IO.File]::WriteAllText($script:StatePath, $jsonContent, $utf8NoBom)
 }
 
+function ConvertFrom-JsonCompat([string]$jsonText, [int]$Depth = 32) {
+    $command = Get-Command ConvertFrom-Json -ErrorAction Stop
+    if ($command.Parameters.ContainsKey('Depth')) {
+        return ($jsonText | ConvertFrom-Json -Depth $Depth)
+    }
+
+    return ($jsonText | ConvertFrom-Json)
+}
+
 function Test-HasTemplates {
     $rankFiles = if (Test-Path $script:RankTemplatesDir) { Get-ChildItem $script:RankTemplatesDir -File | Where-Object { $_.Extension -match '^\.(png|jpg|jpeg|bmp)$' } } else { @() }
     $suitFiles = if (Test-Path $script:SuitTemplatesDir) { Get-ChildItem $script:SuitTemplatesDir -File | Where-Object { $_.Extension -match '^\.(png|jpg|jpeg|bmp)$' } } else { @() }
@@ -102,6 +111,64 @@ function Get-NodeCommandPath {
     return $null
 }
 
+function Join-OutputLines($value) {
+    if ($null -eq $value) {
+        return ''
+    }
+    if ($value -is [System.Array]) {
+        return ($value -join [Environment]::NewLine)
+    }
+    return [string]$value
+}
+
+function Invoke-NodeJsonCommand([string]$nodeCommand, [string]$scriptPath, [string[]]$arguments, [int]$Depth = 32) {
+    $stdoutPath = Join-Path $script:ProjectRoot 'screen-recognition\last-node-stdout.json'
+    $stderrPath = Join-Path $script:ProjectRoot 'screen-recognition\last-node-stderr.log'
+    $jsonOutPath = Join-Path $script:ProjectRoot 'screen-recognition\last-node-payload.json'
+    Ensure-ParentDirectory $stdoutPath
+
+    if (Test-Path $stdoutPath) { Remove-Item $stdoutPath -Force -ErrorAction SilentlyContinue }
+    if (Test-Path $stderrPath) { Remove-Item $stderrPath -Force -ErrorAction SilentlyContinue }
+    if (Test-Path $jsonOutPath) { Remove-Item $jsonOutPath -Force -ErrorAction SilentlyContinue }
+
+    $effectiveArguments = @($arguments) + @('--json-out', $jsonOutPath)
+    $stdout = & $nodeCommand $scriptPath @effectiveArguments 2> $stderrPath
+    $exitCode = $LASTEXITCODE
+    $stdoutText = Join-OutputLines $stdout
+    $stderrText = if (Test-Path $stderrPath) { Get-Content $stderrPath -Raw -Encoding UTF8 } else { '' }
+
+    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    [System.IO.File]::WriteAllText($stdoutPath, $stdoutText, $utf8NoBom)
+
+    if ($exitCode -ne 0) {
+        throw ((@($stderrText, $stdoutText) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }) -join [Environment]::NewLine)
+    }
+
+    $jsonText = if (Test-Path $jsonOutPath) {
+        Get-Content $jsonOutPath -Raw -Encoding UTF8
+    } else {
+        $stdoutText
+    }
+    $jsonText = $jsonText.Trim()
+    if ([string]::IsNullOrWhiteSpace($jsonText)) {
+        $stderrHint = if (-not [string]::IsNullOrWhiteSpace($stderrText)) { "`n错误日志：$stderrPath" } else { '' }
+        throw ("识别器没有返回 JSON。标准输出：$stdoutPath`nJSON 输出：$jsonOutPath" + $stderrHint)
+    }
+
+    $firstBrace = $jsonText.IndexOf('{')
+    $lastBrace = $jsonText.LastIndexOf('}')
+    if ($firstBrace -ge 0 -and $lastBrace -gt $firstBrace) {
+        $jsonText = $jsonText.Substring($firstBrace, $lastBrace - $firstBrace + 1)
+    }
+
+    try {
+        return (ConvertFrom-JsonCompat -jsonText $jsonText -Depth $Depth)
+    } catch {
+        $stderrHint = if (-not [string]::IsNullOrWhiteSpace($stderrText)) { "`n错误日志：$stderrPath" } else { '' }
+        throw ("JSON 解析失败：{0}`n标准输出：{1}`nJSON 输出：{2}{3}" -f $_.Exception.Message, $stdoutPath, $jsonOutPath, $stderrHint)
+    }
+}
+
 function Format-RegionText($region) {
     if ($null -eq $region) {
         return '未设置'
@@ -114,6 +181,60 @@ function Format-PointText($point) {
         return '未设置'
     }
     return ('X={0},Y={1}' -f $point.x, $point.y)
+}
+
+function Format-RankText([string]$rank) {
+    if ([string]::IsNullOrWhiteSpace($rank)) {
+        return ''
+    }
+
+    $normalized = $rank.Trim().ToUpper()
+    if ($normalized -eq 'T') {
+        return '10'
+    }
+
+    return $normalized
+}
+
+function Format-SuitText([string]$suit) {
+    if ([string]::IsNullOrWhiteSpace($suit)) {
+        return ''
+    }
+
+    switch ($suit.Trim().ToLower()) {
+        's' { return '♠' }
+        'h' { return '♥' }
+        'd' { return '♦' }
+        'c' { return '♣' }
+        default { return $suit.Trim() }
+    }
+}
+
+function Format-CardCodeForDisplay([string]$cardCode) {
+    if ([string]::IsNullOrWhiteSpace($cardCode)) {
+        return ''
+    }
+
+    $normalized = $cardCode.Trim()
+    if ($normalized.Length -lt 2) {
+        return $normalized
+    }
+
+    $rank = Format-RankText($normalized.Substring(0, $normalized.Length - 1))
+    $suit = Format-SuitText($normalized.Substring($normalized.Length - 1))
+    if ([string]::IsNullOrWhiteSpace($rank) -or [string]::IsNullOrWhiteSpace($suit)) {
+        return $normalized
+    }
+
+    return ($rank + $suit)
+}
+
+function Format-CardListForDisplay($cards) {
+    if ($null -eq $cards) {
+        return '无'
+    }
+
+    return ((@($cards) | ForEach-Object { Format-CardCodeForDisplay $_ }) -join '  ')
 }
 
 function Update-RegionLabel([System.Windows.Forms.Label]$label, $region) {
@@ -218,7 +339,16 @@ function Set-SelectedCardCount([System.Windows.Forms.ComboBox]$modeCombo, [int]$
 
 function Format-CandidateLine($candidates) {
     if ($null -eq $candidates) { return '无' }
-    return (($candidates | ForEach-Object { '{0}:{1}' -f $_.label, $_.distance }) -join '    ')
+    return (($candidates | ForEach-Object {
+        $label = if ($_.label -match '^[A23456789TJQK][shdc]$') {
+            Format-CardCodeForDisplay $_.label
+        } elseif ($_.label -match '^[shdc]$') {
+            Format-SuitText $_.label
+        } else {
+            Format-RankText $_.label
+        }
+        '{0}:{1}' -f $label, $_.distance
+    }) -join '    ')
 }
 
 function Add-History([string]$message) {
@@ -261,12 +391,7 @@ function Invoke-TemplateBootstrap([int]$cardCount, $currentRegion) {
         return $null
     }
 
-    $raw = & $nodeCommand $script:TemplateBootstrapScriptPath --region-file $script:StatePath --card-count $cardCount --cards $cardsInput 2>&1
-    if ($LASTEXITCODE -ne 0) {
-        throw ($raw -join [Environment]::NewLine)
-    }
-
-    return (($raw -join [Environment]::NewLine) | ConvertFrom-Json -Depth 20)
+    return (Invoke-NodeJsonCommand -nodeCommand $nodeCommand -scriptPath $script:TemplateBootstrapScriptPath -arguments @('--region-file', $script:StatePath, '--card-count', $cardCount, '--cards', $cardsInput) -Depth 20)
 }
 
 function Prepare-ForScreenPick([System.Windows.Forms.Form]$form, [System.Windows.Forms.Label]$statusLabel, [string]$actionName) {
@@ -382,17 +507,24 @@ function Build-RecognitionLog($payload) {
         $lines.Add('')
     }
 
-    $lines.Add(('牌组：{0}' -f ($recognized.cardCodes -join '  ')))
-    $lines.Add(('保留：{0}' -f ($strategy.bestCards -join '  ')))
-    $lines.Add(('丢弃：{0}' -f ($strategy.discardCards -join '  ')))
+    $lines.Add(('牌组：{0}' -f (Format-CardListForDisplay $recognized.cardCodes)))
+    $lines.Add(('保留：{0}' -f (Format-CardListForDisplay $strategy.bestCards)))
+    $lines.Add(('丢弃：{0}' -f (Format-CardListForDisplay $strategy.discardCards)))
     $lines.Add(('最优：{0}/{1}' -f $strategy.hand.nameZh, $strategy.hand.score))
-    if ($recognized.recognitionMode -eq 'template') {
+    if ($recognized.recognitionBackend -eq 'hybrid-opencv' -or $recognized.recognitionMode -eq 'hybrid-opencv') {
+        $lines.Add('识别：混合(OpenCV+模板)')
+    } elseif ($recognized.recognitionBackend -eq 'python-opencv' -or $recognized.recognitionMode -eq 'python-opencv') {
+        $lines.Add('识别：OpenCV')
+    } elseif ($recognized.recognitionMode -eq 'template') {
         $lines.Add('识别：模板')
     } else {
         $lines.Add('识别：内置')
     }
     if ($recognized.uniquenessResolved) {
         $lines.Add(('纠偏：已自动修正 {0} 张重复/冲突牌' -f $recognized.uniquenessChangesCount))
+    }
+    if (-not [string]::IsNullOrWhiteSpace($recognized.fallbackReason)) {
+        $lines.Add(('提示：{0}' -f $recognized.fallbackReason))
     }
     $lines.Add(('置信：{0}' -f $averageConfidence))
     if ($payload.debug.handRegionPreviewPath) { $lines.Add(('预览：{0}' -f $payload.debug.handRegionPreviewPath)) }
@@ -402,13 +534,13 @@ function Build-RecognitionLog($payload) {
     foreach ($card in $recognized.cards) {
         $rankConfidence = if ($null -ne $card.rankMatch.selectedConfidence) { $card.rankMatch.selectedConfidence } else { $card.rankMatch.confidence }
         $suitConfidence = if ($null -ne $card.suitMatch.selectedConfidence) { $card.suitMatch.selectedConfidence } else { $card.suitMatch.confidence }
-        $lines.Add(('[{0}] {1} | 点{2}/{3} 花{4}/{5} 综{6}' -f $card.cardIndexHuman, $card.code, $card.rank, $rankConfidence, $card.suit, $suitConfidence, $card.confidence))
+        $lines.Add(('[{0}] {1} | 点数 {2}/{3} | 花色 {4}/{5} | 综合 {6}' -f $card.cardIndexHuman, (Format-CardCodeForDisplay $card.code), (Format-RankText $card.rank), $rankConfidence, (Format-SuitText $card.suit), $suitConfidence, $card.confidence))
     }
 
     $lines.Add('')
     $lines.Add('组合：')
     foreach ($combo in $diagnostics.combinations) {
-        $lines.Add(('#{0} 保留 {1} | 丢弃 {2} | {3}/{4}' -f $combo.rank, ($combo.selectedCards -join ' '), ($combo.discardedCards -join ' '), $combo.hand.nameZh, $combo.hand.score))
+        $lines.Add(('#{0} 保留 {1} | 丢弃 {2} | {3}/{4}' -f $combo.rank, (Format-CardListForDisplay $combo.selectedCards), (Format-CardListForDisplay $combo.discardedCards), $combo.hand.nameZh, $combo.hand.score))
     }
 
     return ($lines -join [Environment]::NewLine)
@@ -459,11 +591,7 @@ function Get-RecognitionPayload([int]$cardCount, $currentRegion, $currentPlayPoi
     }
 
     Save-UiState $currentRegion.Value $cardCount $currentPlayPoint.Value
-    $raw = & $nodeCommand $script:NodeScriptPath --region-file $script:StatePath --output $script:LatestScreenPath --card-count $cardCount 2>&1
-    if ($LASTEXITCODE -ne 0) {
-        throw ($raw -join [Environment]::NewLine)
-    }
-    return (($raw -join [Environment]::NewLine) | ConvertFrom-Json -Depth 50)
+    return (Invoke-NodeJsonCommand -nodeCommand $nodeCommand -scriptPath $script:NodeScriptPath -arguments @('--region-file', $script:StatePath, '--output', $script:LatestScreenPath, '--card-count', $cardCount) -Depth 50)
 }
 
 function Process-RecognitionPayload([System.Windows.Forms.Form]$form, [System.Windows.Forms.Label]$statusLabel, [System.Windows.Forms.TextBox]$resultBox, [System.Windows.Forms.CheckBox]$autoPlayCheckBox, $payload, [bool]$fromLoop) {
@@ -477,7 +605,7 @@ function Process-RecognitionPayload([System.Windows.Forms.Form]$form, [System.Wi
     }
 
     if ($signature -ne $script:LoopState.LastSeenSignature) {
-        Add-History ('新牌面：{0}' -f ($payload.result.recognized.cardCodes -join ' '))
+        Add-History ('新牌面：{0}' -f (Format-CardListForDisplay $payload.result.recognized.cardCodes))
         $script:LoopState.LastSeenSignature = $signature
         $resultBox.Text = Build-RecognitionLog $payload
     }
@@ -487,7 +615,7 @@ function Process-RecognitionPayload([System.Windows.Forms.Form]$form, [System.Wi
         $didPlay = Invoke-ClickPlan -form $form -payload $payload -statusLabel $statusLabel
         if ($didPlay) {
             $script:LoopState.LastActionSignature = $signature
-            Add-History ('已出牌：保留 {0}' -f ($payload.result.strategy.bestCards -join ' '))
+            Add-History ('已出牌：保留 {0}' -f (Format-CardListForDisplay $payload.result.strategy.bestCards))
             $resultBox.Text = Build-RecognitionLog $payload
             Update-Status $statusLabel '已自动出牌'
             return

@@ -236,6 +236,44 @@ function localizeHandDesc(details) {
     return localizedName;
 }
 
+function localizeHandName(name) {
+    var handNameMap = {
+        "High Card": "散牌",
+        "Pair": "对子",
+        "Color": "同花",
+        "Sequence": "顺子",
+        "Pure Sequence": "同花顺",
+        "Trio": "豹子"
+    };
+    return handNameMap[name] || name;
+}
+
+function localizeHandDesc(details) {
+    var desc = details.desc || "";
+    var localizedName = localizeHandName(details.name);
+
+    if (/^Trio of /i.test(desc)) {
+        return localizedName + " " + desc.replace(/^Trio of /i, "");
+    }
+    if (/^Pair of /i.test(desc)) {
+        return localizedName + " " + desc.replace(/^Pair of /i, "");
+    }
+    if (/^Pure Sequence of /i.test(desc)) {
+        return localizedName + " " + desc.replace(/^Pure Sequence of /i, "").replace(/ High$/i, " 高");
+    }
+    if (/^Sequence of /i.test(desc)) {
+        return localizedName + " " + desc.replace(/^Sequence of /i, "").replace(/ High$/i, " 高");
+    }
+    if (/^Color of /i.test(desc)) {
+        return localizedName + " " + desc.replace(/^Color of /i, "").replace(/ High$/i, " 高");
+    }
+    if (/^High Card of /i.test(desc)) {
+        return localizedName + " " + desc.replace(/^High Card of /i, "").replace(/ High$/i, " 高");
+    }
+
+    return localizedName;
+}
+
 function normalizeCardCode(card) {
     if (!_.isString(card)) {
         throw new TypeError("Card must be a string, for example 'As' or 'Td'.");
@@ -416,6 +454,7 @@ function buildCardRecognitionConfigFromHandRegion(handRegion, cardCount, options
     var baseDir = resolvedOptions.baseDir || process.cwd();
     var templateRoot = resolvedOptions.templateRoot || "./screen-recognition/templates";
     var recognitionMode = resolvedOptions.recognitionMode || "auto";
+    var recognitionBackend = resolvedOptions.recognitionBackend || process.env.SCREEN_RECOGNITION_BACKEND || "auto";
     var cardWidth = normalizedHandRegion.width / normalizedCardCount;
     var rankRegion = resolvedOptions.rankRegion || {
         x: Math.round(cardWidth * 0.06),
@@ -434,8 +473,11 @@ function buildCardRecognitionConfigFromHandRegion(handRegion, cardCount, options
         baseDir: baseDir,
         templateRoot: templateRoot,
         recognitionMode: recognitionMode,
+        recognitionBackend: recognitionBackend,
         rankTemplatesDir: resolvedOptions.rankTemplatesDir,
         suitTemplatesDir: resolvedOptions.suitTemplatesDir,
+        cardTemplatesDir: resolvedOptions.cardTemplatesDir,
+        builtinFontTemplateRoot: resolvedOptions.builtinFontTemplateRoot,
         cardRegions: _.range(normalizedCardCount).map(function (index) {
             return {
                 x: Math.round(normalizedHandRegion.x + (index * cardWidth)),

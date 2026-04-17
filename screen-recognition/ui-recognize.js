@@ -49,6 +49,7 @@ async function main() {
     const projectRoot = path.resolve(__dirname, "..");
     const regionFile = path.resolve(projectRoot, args["region-file"] || "./screen-recognition/ui-state.json");
     const outputPath = args["output"] ? path.resolve(projectRoot, args["output"]) : undefined;
+    const jsonOutPath = args["json-out"] ? path.resolve(projectRoot, args["json-out"]) : undefined;
     const state = readRegionFile(regionFile);
     const handRegion = state.handRegion || state.region || state;
     const cardCount = Number(args["card-count"] || state.cardCount || 4);
@@ -87,7 +88,7 @@ async function main() {
         handPreviewPath
     );
 
-    process.stdout.write(JSON.stringify({
+    const payload = {
         state: {
             handRegion: handRegion,
             cardCount: cardCount,
@@ -102,7 +103,13 @@ async function main() {
             cardClickPoints: cardClickPoints,
             playButtonPoint: state.playButtonPoint || null
         }
-    }, null, 2));
+    };
+    const jsonText = JSON.stringify(payload, null, 2);
+    if (jsonOutPath) {
+        fs.mkdirSync(path.dirname(jsonOutPath), { recursive: true });
+        fs.writeFileSync(jsonOutPath, jsonText, "utf8");
+    }
+    process.stdout.write(jsonText);
 }
 
 main().catch(function (error) {

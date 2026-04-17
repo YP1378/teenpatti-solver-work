@@ -8,6 +8,8 @@
     "cmd": "node cmd-game.js",
     "play": "node cmd-game.js",
     "screen-ui": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./screen-card-helper.ps1",
+    "capture:hand-sample": "node ./screen-recognition/capture-hand-region-sample.js",
+    "collect:auto": "node ./screen-recognition/auto-collect-material-sample.js",
     "build:portable": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./tools/build-portable.ps1"
   },
   "repository": {

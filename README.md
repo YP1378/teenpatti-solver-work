@@ -1,667 +1,251 @@
-# Teen Patti Solver for Node.js
+# ZhaJinHuaJHJ / teenpatti-solver-work
 
-一个适合二开和嵌入其他项目的炸金花/Teen Patti 求解器。
+## README 永久职责
 
-当前这个工作副本已经补充了：
+本文件**长期只承担三件事**，后续维护必须坚持，不要再把 README 写回“大而全教程”。
 
-- `4张选3张` 最佳策略接口
-- `5张选3张` 最佳策略接口
-- 返回结构化结果，方便其他项目直接调用
-- 最小可玩的中文 `CMD` 版本
-- 可直接双击启动的便携版 UI
-- 模板优先、内置兜底的识牌能力
+1. **记录需求**：持续记录用户新增、变化、废弃的需求。任何功能、架构、策略都必须能追溯到需求；需求没记清，项目就会反复返工。
+2. **提供完备入口**：给新加入工程师一个“最快定位代码”的入口，避免浪费大量时间在找文件、找函数、找调用链上。
+3. **沉淀防踩坑要点**：记录已经踩过的坑、失败经验和约束规则。本项目不允许在同一类错误上重复消耗开发时间。
 
-## 便携版运行
+除以上三类内容外，README 不再堆放冗长演示、重复教程或一次性说明。
 
-如果你要把程序发到另一台 Windows 电脑上，优先使用便携版目录。
+## 项目当前范围
 
-当前项目已经支持“开发机打包、目标机直接双击运行”的过渡方案：
+这是一个炸金花/Teen Patti 辅助项目，包含两条主线：
 
-- 内置 `runtime/node/node.exe`
-- 内置 `node_modules`
-- 不要求目标机额外安装 `Node.js`
-- 主入口可以直接双击 `启动屏幕识牌助手.vbs`
-
-### 开发机打包
-
-在当前项目目录执行任意一种：
-
-```bash
-npm run build:portable
-```
-
-或者直接双击：
-
-- `teenpatti-solver-work/构建便携版.cmd`
-
-打包结果默认输出到：
-
-- `teenpatti-solver-work/dist/炸金花助手便携版`
-
-### 目标机启动
-
-把整个 `teenpatti-solver-work/dist/炸金花助手便携版` 文件夹拷过去，然后双击：
-
-- `teenpatti-solver-work/dist/炸金花助手便携版/启动屏幕识牌助手.vbs`
-
-如果你想运行命令行版本，也可以用：
-
-- `teenpatti-solver-work/dist/炸金花助手便携版/启动CMD游戏.cmd`
-
-### 便携版说明
-
-- 这是“过渡版本”，重点是目标机不装环境也能运行
-- 当前 UI 仍然是 `PowerShell + WinForms`
-- 无模板时也可以直接使用内置识别兜底
-- 后面如果你继续产品化，可以再把 UI 迁到真正的桌面 `exe`
-
-## 快速开始
-
-```bash
-npm install
-```
-
-在当前项目里直接调用：
-
-```javascript
-const solver = require("./index");
-
-const strategy = solver.getBestStrategyForFourCards(["As", "Kd", "Qc", "Jh"]);
-console.log(strategy);
-```
-
-在其他 Node.js 项目里调用：
-
-```javascript
-const path = require("path");
-const solver = require(path.resolve("D:/A1/CodeProjects/ZhaJinHuaJHJ/teenpatti-solver-work"));
-
-const strategy = solver.getBestStrategyForFourCards(["As", "Kd", "Qc", "Jh"]);
-console.log(strategy);
-```
-
-## 推荐接口
-
-如果你的目标是：
-
-- 让其他项目直接拿到 `4选3` 的最佳结果
-- 知道应该保留哪 3 张、丢弃哪 1 张
-- 同时拿到牌型中文名、英文名、分数和原始下标
-
-推荐优先用下面这组接口：
-
-- `getBestStrategyForFourCards(cards, options)`
-- `getBestStrategyForFiveCards(cards, options)`
-- `getBestStrategyForCards(cards, options)`
-
-这组接口是给“外部项目接入”准备的，返回值更稳定，也更适合业务代码直接使用。
-
-## 屏幕识牌模块（模板优先 + 内置兜底）
-
-如果你的 AI 不是直接拿到牌面数据，而是只能“看屏幕”，现在也可以直接调用截图识牌模块。
-
-这个模块的目标是：
-
-- 从游戏截图中识别 4 张手牌
-- 判断每张牌的点数和花色
-- 输出标准牌面编码，例如 `As`、`Td`、`9h`、`Qc`
-- 识别完成后，直接接入 `4选3` 最优策略接口
-
-### 识牌模块适合的场景
-
-- AI 通过截图感知游戏画面
-- UI 没有直接暴露手牌数据
-- 牌位置固定、牌角样式固定、界面缩放基本固定
-
-### 识牌原理
-
-当前实现不是依赖外部安装环境的 OCR，而是两层识别：
-
-- `模板识别`：你自己放模板图，准确率通常更高
-- `内置识别`：程序自带轻量字模，不放模板也能先跑起来
-
-默认使用：
-
-- `recognitionMode: "auto"`
-- 有模板时优先走模板识别
-- 没模板时自动切到内置识别
-
-流程是：
-
-- 先从整张截图里裁出 4 张牌的位置
-- 再从每张牌里裁出左上角的 `点数区域` 和 `花色区域`
-- 对裁出的图块做灰度化、缩放、阈值二值化
-- 模板模式下，再和模板图片逐像素比较，选出最接近的结果
-- 内置模式下，再和程序内置的小型字模特征做比对
-
-这套方式在“同一个游戏 UI、同一套缩放、同一套牌面皮肤”下，模板识别通常更稳；内置识别更适合先落地、先开箱即用。
-
-### `recognitionMode` 说明
-
-- `auto`：默认；有模板用模板，没有模板用内置
-- `template`：强制模板识别；缺模板时直接报错
-- `builtin`：强制内置识别
-
-### 相关文件
-
-- 识牌模块：`teenpatti-solver-work/screen-recognition/index.js`
-- 示例配置：`teenpatti-solver-work/screen-recognition/config.sample.json`
-- 模板说明：`teenpatti-solver-work/screen-recognition/templates/README.md`
-
-### 模板目录
-
-把模板图片放到下面两个目录：
-
-- `teenpatti-solver-work/screen-recognition/templates/ranks`
-- `teenpatti-solver-work/screen-recognition/templates/suits`
-
-点数模板建议命名：
-
-- `A.png`
-- `K.png`
-- `Q.png`
-- `J.png`
-- `T.png`
-- `9.png` 到 `2.png`
-
-花色模板建议命名：
-
-- `s.png`：黑桃
-- `h.png`：红桃
-- `d.png`：方块
-- `c.png`：梅花
-
-### 配置示例
-
-复制并修改这个文件：
-
-- `teenpatti-solver-work/screen-recognition/config.sample.json`
-
-其中：
-
-- `recognitionMode: "auto"` 表示模板优先、无模板自动兜底
-
-你主要需要调整：
-
-- `cardRegions`：4 张牌在整张截图里的位置
-- `rankRegion`：每张牌左上角点数区域的位置
-- `suitRegion`：每张牌左上角花色区域的位置
-- `preprocess.rank / preprocess.suit`：二值化和缩放参数
-
-### 直接识别截图中的 4 张牌
-
-```javascript
-const path = require("path");
-const solver = require(path.resolve("D:/A1/CodeProjects/ZhaJinHuaJHJ/teenpatti-solver-work"));
-
-async function main() {
-  const result = await solver.recognizeFourCardsFromImage(
-    {
-      ...require("./screen-recognition/config.sample.json"),
-      recognitionMode: "auto"
-    },
-    "./sample-screenshot.png"
-  );
-
-  console.log(result.cardCodes);
-  console.log(result.cards);
-}
-
-main().catch(console.error);
-```
-
-返回结果大致如下：
-
-```javascript
-{
-  screenshotPath: 'D:/.../sample-screenshot.png',
-  cardCodes: [ 'As', 'Kd', 'Qc', 'Jh' ],
-  cards: [
-    {
-      cardIndex: 0,
-      cardIndexHuman: 1,
-      code: 'As',
-      rank: 'A',
-      suit: 's',
-      confidence: 0.96,
-      rankMatch: { ... },
-      suitMatch: { ... }
-    }
-  ],
-  recognizedAt: '2026-04-16T...'
-}
-```
-
-### 识别后直接求 4选3 最佳策略
-
-如果你想一步拿到“识别结果 + 4选3 最优解”，可以直接调用：
-
-```javascript
-const path = require("path");
-const solver = require(path.resolve("D:/A1/CodeProjects/ZhaJinHuaJHJ/teenpatti-solver-work"));
-
-async function main() {
-  const result = await solver.recognizeAndSolveFourCardsFromImage(
-    {
-      ...require("./screen-recognition/config.sample.json"),
-      recognitionMode: "auto"
-    },
-    "./sample-screenshot.png",
-    { indexBase: 1 }
-  );
-
-  console.log(result.recognized.cardCodes);
-  console.log(result.strategy.bestCards);
-  console.log(result.strategy.discardCards);
-  console.log(result.strategy.hand.nameZh, result.strategy.hand.score);
-}
-
-main().catch(console.error);
-```
-
-### 直接截主屏并识别
-
-如果你不想先手动保存截图，也可以让模块直接抓取主屏幕：
-
-```javascript
-const path = require("path");
-const solver = require(path.resolve("D:/A1/CodeProjects/ZhaJinHuaJHJ/teenpatti-solver-work"));
-
-async function main() {
-  const result = await solver.recognizeFourCardsFromScreen(
-    {
-      ...require("./screen-recognition/config.sample.json"),
-      recognitionMode: "auto"
-    },
-    { outputPath: "./latest-screen.png" }
-  );
-
-  console.log(result.cardCodes);
-}
-
-main().catch(console.error);
-```
-
-### 直接强制使用内置识别
-
-```javascript
-const path = require("path");
-const solver = require(path.resolve("D:/A1/CodeProjects/ZhaJinHuaJHJ/teenpatti-solver-work"));
-
-async function main() {
-  const result = await solver.recognizeAndSolveHandRegionFromScreen(
-    { x: 820, y: 900, width: 420, height: 130 },
-    {
-      cardCount: 4,
-      recognitionMode: "builtin",
-      outputPath: "./latest-screen.png",
-      indexBase: 1
-    }
-  );
-
-  console.log(result.recognized.recognitionMode);
-  console.log(result.recognized.cardCodes);
-  console.log(result.strategy.bestCards);
-}
-
-main().catch(console.error);
-```
-
-### 对外接口列表
-
-- `createScreenCardRecognizer(config)`：创建可复用识牌器，适合高频调用
-- `capturePrimaryScreen(outputPath)`：抓取主屏截图到文件
-- `recognizeCardsFromImage(config, screenshotPath)`：识别任意数量配置好的牌位
-- `recognizeFourCardsFromImage(config, screenshotPath)`：识别 4 张手牌
-- `recognizeCardsFromScreen(config, options)`：先抓主屏，再识牌
-- `recognizeFourCardsFromScreen(config, options)`：先抓主屏，再识别 4 张手牌
-- `recognizeAndSolveFourCardsFromImage(config, screenshotPath, options)`：识牌后直接算 4选3 最优解
-- `recognizeAndSolveFourCardsFromScreen(config, options)`：截屏、识牌、算 4选3 最优解一条龙
-
-## 极简屏幕识牌 UI
-
-为了方便你直接在游戏时使用，我还加了一个 Windows 下的极简小界面。
-
-特点：
-
-- 默认出现在屏幕左下角
-- 比最初版本多留了一些空间，方便测试时看日志
-- 依然尽量不挡住游戏画面
-- 可以切换 `4张选3张` / `5张选3张`
-- 有按钮可以直接框选手牌整体区域
-- 可以单独设置“出牌按钮”的点击坐标
-- 可以勾选“自动出牌”，识别后自动点击最佳 3 张，再点击出牌按钮
-- 框选完成后，可以一键识别当前屏幕
-- 内置 `录入模板` 按钮，能把当前这手真实牌面直接写进模板目录
-- 可以通过顶部的 `连续挂机` 切换控件进入连续多局模式
-- 连续模式下会持续重新识别当前局牌面，牌面不变时不会重复点击
-- 缺少前置条件时会直接弹窗提示，而不是静默失败
-- 识别后会显示详细日志，方便你判断：
-  - 数字识别对不对
-  - 花色识别对不对
-  - 候选模板是不是合理
-  - `4选3` / `5选3` 选出来的策略是不是最优
-  - 当前是走 `模板` 还是 `内置` 识别
-  - 是否触发了重复牌自动纠偏
-  - 当前框选区域预览图保存在哪里
-
-### 启动方式
-
-直接双击：
-
-- `teenpatti-solver-work/启动屏幕识牌助手.vbs`
-
-或者手动运行：
-
-- `teenpatti-solver-work/屏幕识牌助手.ps1`
-- `teenpatti-solver-work/screen-card-helper.ps1`
-
-或者在终端里运行：
-
-```bash
-npm run screen-ui
-```
-
-### 使用步骤
-
-1. 先准备好模板图片
-   - 如果你已经有模板，就放到 `screen-recognition/templates/ranks` 和 `screen-recognition/templates/suits`
-   - 如果还没有模板，也可以直接先启动，用内置识别兜底
-2. 双击启动 `启动屏幕识牌助手.vbs`
-3. 在界面里先选择模式：`4张选3张` 或 `5张选3张`
-4. 点击 `框选手牌区域`
-5. 弹窗提示后，在 2 秒内切回游戏窗口
-6. 在屏幕上拖动鼠标，框住“整排手牌区域”
-   - 如果是 `4张选3张`，就框住 4 张牌整体
-   - 如果是 `5张选3张`，就框住 5 张牌整体
-7. 如果识别不准，先点一次 `识别`，再查看日志里的 `预览` 图片路径
-8. 如果你知道当前实际牌面，可以点 `录入模板`，输入例如 `As Qh Jd 3d`
-9. 点击 `出牌点`，在屏幕上点一下“出牌/确认”按钮的位置
-10. 如果要自动执行，勾选 `自动出牌`
-11. 单次测试时，点击 `识别`
-12. 连续多局时，打开顶部的 `连续挂机`
-13. 小界面会显示：
-   - 识别到的整组牌
-   - 每张牌的数字、花色、综合置信度
-   - 点数候选和花色候选
-   - 建议保留的三张
-   - 建议丢弃的牌
-   - 组合排名日志
-   - 当前最优牌型与分数
-   - 最近几次挂机识别/出牌记录
-
-### 适合怎样的框选方式
-
-建议你框的是：
-
-- 整排手牌横向排列的区域
-- 尽量让每张牌的左上角点数和花色都在框里
-- 不需要框得特别大，能覆盖所有手牌的可见部分即可
-
-如果手牌之间有一定重叠也没关系，只要每张牌左上角还能看到，通常都能识别。
-
-### 推荐排错顺序
-
-如果你点了 `识别` 之后结果不对，建议按下面顺序排查：
-
-1. 先看日志里的 `预览` 图片路径，确认框到的真的是牌区
-2. 如果预览图就是手牌，但牌面识别还是不准，点 `录入模板`
-3. 在输入框里填入当前真实牌面，例如 `As Qh Jd 3d`
-4. 再点一次 `识别`
-
-这一步会把当前牌面的真实数字和花色，直接裁成模板写入：
-
-- `screen-recognition/templates/ranks`
-- `screen-recognition/templates/suits`
-
-同一标签支持多个模板变体，例如：
-
-- `d.png`
-- `d__1.png`
-- `d__2.png`
-
-这些都会被当成同一个花色标签 `d` 参与匹配，所以很适合慢慢积累你这款游戏自己的牌面模板。
-
-### UI 相关文件
-
-- 启动入口：`teenpatti-solver-work/启动屏幕识牌助手.vbs`
-- 主界面：`teenpatti-solver-work/屏幕识牌助手.ps1`
-- 英文文件名副本：`teenpatti-solver-work/screen-card-helper.ps1`
-- UI 调用的桥接脚本：`teenpatti-solver-work/screen-recognition/ui-recognize.js`
-- 模板录入脚本：`teenpatti-solver-work/screen-recognition/bootstrap-templates.js`
-
-### UI 背后调用的高层接口
-
-这个小界面最终调用的是：
-
-- `buildCardRecognitionConfigFromHandRegion(handRegion, cardCount, options)`
-- `recognizeAndSolveHandRegionFromScreen(handRegion, options)`
-- `getStrategyDiagnosticsForCards(cards, options)`
-
-自动出牌部分会根据最优策略，额外生成“点击计划”：
-
-- 依次点击最佳 3 张牌的中心点
-- 最后点击你设置好的“出牌点”
-
-连续挂机模式还会额外做一层防重复逻辑：
-
-- 如果当前牌面和上一轮已经处理过的牌面相同，就不会重复点击
-- 只有检测到新牌面时，才会重新识别并重新出牌
-
-所以如果你后面不想用这个小界面，也可以在别的项目里直接调用同一套逻辑。
-
-### 注意事项
-
-- 这套识别依赖固定 UI，适合同一款游戏、同一套分辨率和缩放
-- 如果游戏窗口移动了、缩放变了、牌面皮肤变了，就要重新调配置或模板
-- 如果识别不准，优先看 `latest-hand-region.png` 这类预览图，先确认是否真的框到了牌区
-- 第二步再用 `录入模板` 从真实截图里积累模板
-- 第三步再调 `rankRegion`、`suitRegion`、`threshold`、`contrast`、`invert`
-- 模板一定要从真实截图裁出来，不要自己手工画
-
-## 四选三最佳策略接口
-
-### 接口名称
-
-```javascript
-solver.getBestStrategyForFourCards(cards, options)
-```
-
-### 参数
-
-- `cards`：长度必须为 `4` 的数组
-- `options.indexBase`：返回下标的起始值，可选
-  - 默认是 `0`
-  - 传 `{ indexBase: 1 }` 时，下标从 `1` 开始，更适合 UI 层直接展示
-
-### 输入格式
-
-牌面必须使用两位编码：
-
-- `As`：黑桃 A
-- `Td`：方块 10
-- `9h`：红桃 9
-- `Qc`：梅花 Q
-
-大小写都可以，例如：
-
-- `as`
-- `TD`
-- `qC`
-
-接口内部会自动规范成标准格式。
-
-### 调用示例
-
-```javascript
-const solver = require("./index");
-
-const strategy = solver.getBestStrategyForFourCards(
-  ["As", "Kd", "Qc", "Jh"],
-  { indexBase: 1 }
-);
-
-console.log(strategy);
-```
-
-### 返回示例
-
-```javascript
-{
-  mode: '4_choose_3',
-  inputCards: [ 'As', 'Kd', 'Qc', 'Jh' ],
-  bestCards: [ 'As', 'Kd', 'Qc' ],
-  bestCardIndexes: [ 1, 2, 3 ],
-  discardCards: [ 'Jh' ],
-  discardIndexes: [ 4 ],
-  hand: {
-    name: 'Sequence',
-    nameZh: '顺子',
-    desc: 'Sequence of A High',
-    descZh: '顺子 A 高',
-    score: 3141312
-  }
-}
-```
-
-### 返回字段说明
-
-- `mode`：当前模式，例如 `4_choose_3`
-- `inputCards`：原始输入牌组
-- `bestCards`：建议保留的最佳 3 张牌
-- `bestCardIndexes`：最佳 3 张牌在原始数组中的位置
-- `discardCards`：建议丢弃的牌
-- `discardIndexes`：建议丢弃牌在原始数组中的位置
-- `hand.name`：英文牌型名
-- `hand.nameZh`：中文牌型名
-- `hand.desc`：英文说明
-- `hand.descZh`：中文说明
-- `hand.score`：牌型分数，越大越强
-
-### 最常见用法
-
-只拿“应该保留哪 3 张”：
-
-```javascript
-const strategy = solver.getBestStrategyForFourCards(["As", "Kd", "Qc", "Jh"]);
-console.log(strategy.bestCards);
-```
-
-只拿“应该丢掉哪一张”：
-
-```javascript
-const strategy = solver.getBestStrategyForFourCards(["As", "Kd", "Qc", "Jh"]);
-console.log(strategy.discardCards[0]);
-```
-
-只拿“推荐保留的下标”：
-
-```javascript
-const strategy = solver.getBestStrategyForFourCards(
-  ["As", "Kd", "Qc", "Jh"],
-  { indexBase: 1 }
-);
-
-console.log(strategy.bestCardIndexes);
-```
-
-只拿“最终牌型和分数”：
-
-```javascript
-const strategy = solver.getBestStrategyForFourCards(["As", "Kd", "Qc", "Jh"]);
-
-console.log(strategy.hand.nameZh);
-console.log(strategy.hand.score);
-```
-
-## 五选三最佳策略接口
-
-```javascript
-const strategy = solver.getBestStrategyForFiveCards(["As", "Kd", "Qc", "Jh", "Tc"]);
-console.log(strategy);
-```
-
-这个接口的返回结构与 `getBestStrategyForFourCards` 一致，只是输入牌数变成 `5` 张。
-
-## 通用接口
-
-如果你后面还要扩规则，建议直接接这个通用版本：
-
-```javascript
-const strategy = solver.getBestStrategyForCards(["As", "Kd", "Qc", "Jh", "Tc"]);
-console.log(strategy);
-```
-
-适合后续扩展成：
-
-- `4选3`
-- `5选3`
-- 更多张里选最佳 `3` 张
-
-## 输入校验与异常处理
-
-新接口会主动校验输入，并在输入不合法时直接抛出异常。
-
-会校验的内容包括：
-
-- 是否传入数组
-- 牌数是否正确
-- 是否存在重复牌
-- 牌面编码是否合法
-
-示例：
-
-```javascript
-try {
-  const strategy = solver.getBestStrategyForFourCards(["As", "As", "Qc", "Jh"]);
-  console.log(strategy);
-} catch (error) {
-  console.error(error.message);
-}
-```
-
-## 兼容旧接口
-
-如果你已经在用旧接口，它们仍然可以继续使用：
-
-- `pickBestThreeFromFour(cards)`：返回最佳 3 张组合与剩余牌
-- `pickBestThreeFromFive(cards)`：返回最佳 3 张组合与剩余牌
-- `pickBestThree(cards)`：通用组合搜索
-- `scoreHandsFour(cards)`：只返回 4 选 3 后的最优牌型结果
-- `scoreHandsFive(cards)`：只返回 5 选 3 后的最优牌型结果
-
-但是如果是“其他项目直接接入”，更建议用上面的 `getBestStrategyFor*` 系列接口。
-
-## 命令行试玩
-
-启动方式一：
-
-```bash
-npm run cmd
-```
-
-启动方式二：Windows 双击：
-
-`启动CMD游戏.cmd`
-
-进入后可以：
-
-- 选择 `4张选3张` 或 `5张选3张`
-- 选择电脑数量
-- 自己选 3 张牌
-- 或直接回车，让程序自动帮你选择最优解
-
-## 牌型说明
-
-当前使用的牌型顺序为：
-
-- `豹子`
-- `同花顺`
-- `顺子`
-- `同花`
-- `对子`
-- `散牌`
-
-## 许可证
-
-仓库 `package.json` 中声明许可证为 `ISC`。
+- **策略求解**：从 4 张或 5 张牌中选择最优 3 张，并返回结构化策略结果。
+- **屏幕识牌 + 桌面助手**：从截图或屏幕中识别手牌，给出策略，并可在桌面助手里执行自动出牌。
+
+---
+
+## 一、需求记录
+
+本节只记录“现在项目必须满足什么”。新增需求时，**只追加，不覆盖历史**；废弃需求要显式标注。
+
+### R-001 核心策略求解
+- 支持 `4 选 3` 和 `5 选 3`。
+- 返回值必须结构化，至少包含：输入牌、保留牌、丢弃牌、牌型、中文牌型、分数、下标。
+- 内部统一使用牌码格式：`As`、`Qh`、`Td`、`2s`。
+
+### R-002 屏幕识牌
+- 支持从**图片**和**当前屏幕**识别手牌。
+- 支持通过手牌整体区域自动切分单牌区域。
+- 支持模板识别、内置识别，以及混合识别策略。
+
+### R-003 识别策略升级
+- 当前识别策略必须是**混合策略**，而不是单一路径。
+- 已接入的有效证据源：
+  - 原始 `rank/suit` 模板匹配
+  - 归一化后的符号模板匹配
+  - `auto` 模式下的内置字模候选
+  - 可选的整牌模板匹配 `templates/cards`
+
+### R-004 模板体系
+- 模板目录至少包含：
+  - `screen-recognition/templates/ranks`
+  - `screen-recognition/templates/suits`
+  - `screen-recognition/templates/cards`（可选但推荐）
+- 模板录入脚本必须可同时保存点数模板、花色模板、整牌模板。
+
+### R-005 桌面助手
+- 提供 Windows 下的 PowerShell + WinForms 小工具。
+- 至少支持：框选手牌区域、设置出牌点、单次识别、录入模板、自动出牌、连续挂机。
+
+### R-006 便携运行
+- 项目支持打包为便携版本。
+- 目标机器可通过内置 `runtime/node/node.exe` 直接运行，不强依赖外部 Node.js。
+
+### R-007 用户可读显示
+- 面向用户的日志和 UI，不应只显示内部牌码 `As/Qh/3d`。
+- 用户可见输出应显示成：`A♠`、`K♥`、`10♦`、`Q♣`、`2♠` 这类格式。
+- 中文牌型必须可读，不允许乱码。
+
+### R-008 PowerShell 兼容性
+- 必须兼容 `Windows PowerShell 5.1`。
+- 不能直接依赖仅在较新 PowerShell 可用的参数或行为。
+
+### R-009 文档治理
+- README 只保留“需求记录 / 代码入口 / 防踩坑”三类内容。
+- 与三类职责无关的旧内容可以删除，不再累积文档债务。
+
+### R-010 识别后端升级
+- 默认识别后端必须优先尝试 `OpenCV + 现有 JS 模板/内置` 的融合识别，而不是只跑单一路径。
+- 当目标机器存在 Python + `cv2` 时，默认后端应为 `auto -> hybrid-opencv`。
+- 当 Python/OpenCV 不可用时，必须自动回退到原有 JavaScript 识别链路，不能让桌面助手直接失效。
+
+---
+
+## 二、开发入口
+
+本节回答一个问题：**“我要改某个功能，先去哪个文件？”**
+
+### 1. 策略求解主入口
+- `index.js`
+  - 项目总入口
+  - 暴露策略 API
+  - 暴露识牌后直接求解 API
+  - 手牌区域转识别配置也在这里
+
+### 2. 手牌规则/牌型计算
+- `cards.js`
+  - 牌面基础能力
+- `getWinner.js`
+  - 比牌/胜负相关逻辑
+
+### 3. 命令行玩法/调试
+- `cmd-game.js`
+  - 命令行交互版本
+
+### 4. 屏幕识牌引擎
+- `screen-recognition/index.js`
+  - 识牌核心文件
+  - 模板加载
+  - 内置字模识别
+  - 混合候选融合
+  - 唯一牌码纠偏
+  - 屏幕截图
+
+### 5. UI 与识牌引擎桥接
+- `screen-recognition/ui-recognize.js`
+  - PowerShell UI 调 Node 识牌时的桥接脚本
+
+### 6. 模板录入
+- `screen-recognition/bootstrap-templates.js`
+  - 从当前屏幕抓牌并写入模板目录
+  - 现在会同时保存 `rank/suit/card` 模板
+- `screen-recognition/capture-hand-region-sample.js`
+  - 读取桌面助手已保存的 `ui-state.json`
+  - 重新截图并自动裁出当前手牌区域
+  - 自动放入 `screen-recognition/materials/inbox`
+  - 会先做原始截图去重，避免同一手牌反复堆积
+- `screen-recognition/auto-collect-material-sample.js`
+  - 一次完成：二次截图、识别、置信度判断、素材入库/待审核落盘
+  - 低置信度样本进入 `screen-recognition/materials/manifests/*.pending.json`
+  - 原始截图阶段和导入阶段都会做去重
+- `screen-recognition/import-strip-templates.py`
+  - 从一张横向多牌素材图里自动分卡
+  - 自动裁出整牌 / rank / suit 素材
+  - 用于持续补充素材库与候选模板
+  - 同标签下会做相似图去重，避免重复污染素材库
+
+### 7. 桌面助手 UI
+- `screen-card-helper.ps1`
+  - 主开发脚本
+  - WinForms 按钮、日志、状态、自动出牌逻辑都在这里
+- `屏幕识牌助手.ps1`
+  - 中文入口镜像脚本
+  - 与上面脚本必须保持同步
+
+### 8. 启动与打包
+- `启动屏幕识牌助手.vbs`
+  - 给用户双击启动用
+- `tools/build-portable.ps1`
+  - 打包便携版
+- `构建便携版.cmd`
+  - 打包入口命令
+
+### 9. 运行态与输出文件
+- `screen-recognition/ui-state.json`
+  - 当前 UI 选择的手牌区域、牌数、出牌点
+- `screen-recognition/latest-screen.png`
+  - 最近一次截图
+- `screen-recognition/latest-hand-region.png`
+  - 最近一次手牌区域预览
+- `screen-recognition/materials/manifests/*.pending.json`
+  - 自动采集后置信度不足的待审核样本清单
+
+### 10. 需求到代码的快速映射
+
+如果你要改……请先看这里：
+
+- **改牌型中文 / 策略返回结构** → `index.js`
+- **改识牌策略融合** → `screen-recognition/index.js`
+- **改模板录入行为** → `screen-recognition/bootstrap-templates.js`
+- **按当前已框选区域自动二次截图** → `screen-recognition/capture-hand-region-sample.js`
+- **导入横向多牌素材图** → `screen-recognition/import-strip-templates.py`
+- **改 UI 上的按钮/日志/中文文案** → `screen-card-helper.ps1` 和 `屏幕识牌助手.ps1`
+- **改手牌区域切分逻辑** → `index.js` 里的手牌区域配置构造
+- **改自动出牌点击流程** → `screen-card-helper.ps1` 和 `屏幕识牌助手.ps1`
+- **改便携版打包** → `tools/build-portable.ps1`
+
+### 11. 最小常用命令
+
+- 安装依赖：`npm install`
+- 启动桌面助手：`npm run screen-ui`
+- 按当前已框选区域二次截图并保存样本：`npm run capture:hand-sample`
+- 自动采集素材（截图 + 识别 + 去重 + 入库/待审核）：`npm run collect:auto`
+- 打包便携版：`npm run build:portable`
+
+---
+
+## 三、开发失败后的防踩坑要点（Harness）
+
+本节是项目级约束。**踩过一次的坑，不允许第二次再踩。**
+
+### H-001 不要只改一份 PowerShell UI 脚本
+- `screen-card-helper.ps1` 和 `屏幕识牌助手.ps1` 是镜像关系。
+- 任何 UI 行为、日志格式、兼容性修复，都必须同步两份。
+
+### H-002 必须兼容 PowerShell 5.1
+- 已确认 `Windows PowerShell 5.1` 的 `ConvertFrom-Json` **不支持** `-Depth`。
+- 后续如果要解析 JSON，必须继续沿用兼容写法，不能直接把 `-Depth` 写死。
+
+### H-003 不要把示例配置当成实时配置
+- `screen-recognition/config.sample.json` 是样例。
+- 桌面助手实际运行时，优先使用 `screen-recognition/ui-state.json` 和手牌区域构造逻辑。
+- 调试识别偏差时，不要先怀疑算法，先确认你看的到底是“样例配置”还是“实时区域”。
+
+### H-004 内部牌码与用户显示不是一回事
+- 代码内部统一使用 `As/Qh/Td/2s`。
+- 用户界面和日志统一显示 `A♠/Q♥/10♦/2♠`。
+- 不要为了 UI 好看去破坏内部数据格式，否则会连锁影响求解、模板命名、识别候选和去重逻辑。
+
+### H-005 中文文案和 README 必须保持 UTF-8
+- 本项目历史上出现过中文乱码。
+- 修改用户可见中文时，必须确认文件编码正常，避免再次引入乱码。
+
+### H-006 整牌模板是可选增强，不是硬依赖
+- `screen-recognition/templates/cards` 没有模板时，程序也必须能正常识别。
+- 有整牌模板时，才启用整牌证据参与决策。
+
+### H-007 改手牌区域构造时，不要丢参数透传
+- 手牌区域构造逻辑不仅要传 `rank/suit`，也要传 `cardTemplatesDir` 等增强参数。
+- 以前出现过“功能已实现，但配置没透传，导致功能实际未生效”的问题。
+
+### H-008 识别策略改动后，至少检查三件事
+- 当前样图能否正常输出牌面
+- `matchingStrategies` 和 `availableModes` 是否符合预期
+- 没有整牌模板时是否仍能正常工作
+
+### H-009 调试识牌先看预览图和日志
+- 先看 `latest-screen.png`、`latest-hand-region.png`
+- 再看日志里的牌面、置信度、纠偏信息
+- 不要跳过证据直接改阈值或重写算法
+
+### H-010 不要直接改 `dist`
+- `dist` 是打包产物，不是主开发入口。
+- 功能修复应改源码，再重新打包。
+
+### H-011 OpenCV 后端是增强，不是破坏性替换
+- `screen-recognition/opencv-recognize.py` 是新增增强后端，目的是提升识别率，不是取代现有 JS 逻辑后把回退链路删掉。
+- 改识别策略时，必须同时检查三种状态：`javascript`、`python-opencv`、`auto/hybrid-opencv`。
+- 如果未来目标机器缺少 Python 或 `cv2`，程序仍必须能退回旧链路继续工作。
+
+### H-012 自动采集链路必须先去重，再决定是否入库
+- `materials/inbox` 里的原始手牌截图不能无限堆积重复图。
+- `capture-hand-region-sample.js` 与 `auto-collect-material-sample.js` 的原始截图阶段都要做去重。
+- `import-strip-templates.py` 负责素材级去重；不要只做后半段去重，导致前半段原图目录持续膨胀。
+
+---
+
+## 维护规则
+
+后续任何人修改 README，必须遵守：
+
+- 新需求 → 追加到“需求记录”
+- 新功能入口 → 更新“开发入口”
+- 新踩坑经验 → 追加到“Harness”
+- 与这三类无关的内容，不要继续往 README 塞
+
+如果做不到这点，README 会再次失去作为项目总入口的价值。
