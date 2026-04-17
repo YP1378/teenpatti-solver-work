@@ -51,6 +51,6 @@ npm run collect:auto
 
 行为规则：
 
-- 总是先二次截图，把当前手牌区域保存到 `screen-recognition/materials/inbox`
+- 默认会连续截图 3 次，并结合候选标签做投票纠偏；如果结果足够一致，会直接入库并可同步到 `templates`
 - 如果识别置信度足够高，则自动导入素材库
 - 如果识别置信度不够高，则自动写入 `materials/manifests/*.pending.json`，等待后续人工确认

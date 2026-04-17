@@ -21,6 +21,7 @@ $script:ProjectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $script:StatePath = Join-Path $script:ProjectRoot 'screen-recognition\ui-state.json'
 $script:NodeScriptPath = Join-Path $script:ProjectRoot 'screen-recognition\ui-recognize.js'
 $script:TemplateBootstrapScriptPath = Join-Path $script:ProjectRoot 'screen-recognition\bootstrap-templates.js'
+$script:AutoCollectScriptPath = Join-Path $script:ProjectRoot 'screen-recognition\auto-collect-material-sample.js'
 $script:BundledNodePath = Join-Path $script:ProjectRoot 'runtime\node\node.exe'
 $script:LatestScreenPath = Join-Path $script:ProjectRoot 'screen-recognition\latest-screen.png'
 $script:RankTemplatesDir = Join-Path $script:ProjectRoot 'screen-recognition\templates\ranks'
@@ -394,6 +395,16 @@ function Invoke-TemplateBootstrap([int]$cardCount, $currentRegion) {
     return (Invoke-NodeJsonCommand -nodeCommand $nodeCommand -scriptPath $script:TemplateBootstrapScriptPath -arguments @('--region-file', $script:StatePath, '--card-count', $cardCount, '--cards', $cardsInput) -Depth 20)
 }
 
+function Invoke-AutoCollectMaterial([int]$cardCount, $currentRegion, $currentPlayPoint) {
+    $nodeCommand = Get-NodeCommandPath
+    if ([string]::IsNullOrWhiteSpace($nodeCommand)) {
+        throw '未检测到可用的 Node 运行时。'
+    }
+
+    Save-UiState $currentRegion.Value $cardCount $currentPlayPoint.Value
+    return (Invoke-NodeJsonCommand -nodeCommand $nodeCommand -scriptPath $script:AutoCollectScriptPath -arguments @('--region-file', $script:StatePath, '--card-count', $cardCount, '--attempts', '3', '--attempt-delay-ms', '180') -Depth 80)
+}
+
 function Prepare-ForScreenPick([System.Windows.Forms.Form]$form, [System.Windows.Forms.Label]$statusLabel, [string]$actionName) {
     Show-WarningDialog ("请在 2 秒内切回游戏窗口，然后开始{0}。" -f $actionName)
     Update-Status $statusLabel ('准备' + $actionName)
@@ -541,6 +552,93 @@ function Build-RecognitionLog($payload) {
     $lines.Add('组合：')
     foreach ($combo in $diagnostics.combinations) {
         $lines.Add(('#{0} 保留 {1} | 丢弃 {2} | {3}/{4}' -f $combo.rank, (Format-CardListForDisplay $combo.selectedCards), (Format-CardListForDisplay $combo.discardedCards), $combo.hand.nameZh, $combo.hand.score))
+    }
+
+    return ($lines -join [Environment]::NewLine)
+}
+
+function Format-AutoCollectStatusText([string]$status) {
+    switch ($status) {
+        'imported' { return '已导入素材库' }
+        'pending-review' { return '待人工确认' }
+        default { return $status }
+    }
+}
+
+function Build-AutoCollectLog($payload) {
+    $recognized = if ($null -ne $payload.recognition) { $payload.recognition.recognized } else { $null }
+    $strategy = if ($null -ne $payload.recognition) { $payload.recognition.strategy } else { $null }
+
+    $lines = New-Object 'System.Collections.Generic.List[string]'
+    if ($script:HistoryLines.Count -gt 0) {
+        $lines.Add('最近：')
+        foreach ($historyLine in $script:HistoryLines) { $lines.Add($historyLine) }
+        $lines.Add('')
+    }
+
+    $lines.Add(('采集：{0}' -f (Format-AutoCollectStatusText $payload.status)))
+    $lines.Add(('牌组：{0}' -f (Format-CardListForDisplay $payload.recognizedCards)))
+    if ($null -ne $strategy) {
+        $lines.Add(('保留：{0}' -f (Format-CardListForDisplay $strategy.bestCards)))
+        $lines.Add(('丢弃：{0}' -f (Format-CardListForDisplay $strategy.discardCards)))
+        $lines.Add(('最优：{0}/{1}' -f $strategy.hand.nameZh, $strategy.hand.score))
+    }
+
+    if ($null -ne $recognized) {
+        if ($recognized.recognitionBackend -eq 'hybrid-opencv' -or $recognized.recognitionMode -eq 'hybrid-opencv') {
+            $lines.Add('识别：混合(OpenCV+模板)')
+        } elseif ($recognized.recognitionBackend -eq 'python-opencv' -or $recognized.recognitionMode -eq 'python-opencv') {
+            $lines.Add('识别：OpenCV')
+        } elseif ($recognized.recognitionMode -eq 'template') {
+            $lines.Add('识别：模板')
+        } else {
+            $lines.Add('识别：内置')
+        }
+        if (-not [string]::IsNullOrWhiteSpace($recognized.fallbackReason)) {
+            $lines.Add(('提示：{0}' -f $recognized.fallbackReason))
+        }
+    }
+
+    if ($payload.handRegionDuplicate) {
+        $lines.Add('去重：命中已有原始样本')
+    }
+    if ($payload.attemptsRequested -gt 1) {
+        $attemptsCompleted = if ($null -ne $payload.attemptsCompleted) { $payload.attemptsCompleted } else { $payload.attemptsRequested }
+        $lines.Add(('智能采集：请求 {0} 次，成功 {1} 次，采用第 {2} 次' -f $payload.attemptsRequested, $attemptsCompleted, $payload.selectedAttemptIndex))
+    }
+    if ($null -ne $payload.smartScore) {
+        $lines.Add(('综合评分：{0}' -f $payload.smartScore))
+    }
+    if ($null -ne $payload.repair) {
+        if ($payload.repair.changedCount -gt 0) {
+            $lines.Add(('自动纠偏：已修正 {0} 张' -f $payload.repair.changedCount))
+        }
+        if ($payload.repair.autoImportRecommended) {
+            $lines.Add('自动入库：已启用')
+        }
+        if ($payload.templatesSynced) {
+            $lines.Add('模板同步：已写入 templates')
+        }
+    }
+    if (-not [string]::IsNullOrWhiteSpace($payload.reason) -and $payload.reason -ne 'confidence-ok') {
+        $lines.Add(('结果：{0}' -f $payload.reason))
+    }
+    if ($null -ne $payload.averageConfidence) {
+        $lines.Add(('平均置信：{0}' -f $payload.averageConfidence))
+    }
+    if ($null -ne $payload.minimumConfidence) {
+        $lines.Add(('最低置信：{0}' -f $payload.minimumConfidence))
+    }
+    if (-not [string]::IsNullOrWhiteSpace($payload.savedHandRegionPath)) {
+        $lines.Add(('样本：{0}' -f $payload.savedHandRegionPath))
+    }
+    if (-not [string]::IsNullOrWhiteSpace($payload.pendingManifestPath)) {
+        $lines.Add(('待确认：{0}' -f $payload.pendingManifestPath))
+    } elseif ($null -ne $payload.importResult -and -not [string]::IsNullOrWhiteSpace($payload.importResult.manifestPath)) {
+        $lines.Add(('清单：{0}' -f $payload.importResult.manifestPath))
+    }
+    if (-not [string]::IsNullOrWhiteSpace($payload.updatedLatestHandRegionPath)) {
+        $lines.Add(('预览：{0}' -f $payload.updatedLatestHandRegionPath))
     }
 
     return ($lines -join [Environment]::NewLine)
@@ -758,13 +856,19 @@ $bootstrapTemplatesButton.Size = New-Object System.Drawing.Size(82, 30)
 $bootstrapTemplatesButton.Location = New-Object System.Drawing.Point(346, 138)
 $form.Controls.Add($bootstrapTemplatesButton)
 
+$autoCollectButton = New-Object System.Windows.Forms.Button
+$autoCollectButton.Text = '自动采集素材'
+$autoCollectButton.Size = New-Object System.Drawing.Size(416, 30)
+$autoCollectButton.Location = New-Object System.Drawing.Point(12, 174)
+$form.Controls.Add($autoCollectButton)
+
 $resultBox = New-Object System.Windows.Forms.TextBox
 $resultBox.Multiline = $true
 $resultBox.ScrollBars = [System.Windows.Forms.ScrollBars]::Both
 $resultBox.WordWrap = $false
 $resultBox.ReadOnly = $true
-$resultBox.Size = New-Object System.Drawing.Size(416, 180)
-$resultBox.Location = New-Object System.Drawing.Point(12, 180)
+$resultBox.Size = New-Object System.Drawing.Size(416, 146)
+$resultBox.Location = New-Object System.Drawing.Point(12, 214)
 $resultBox.BackColor = [System.Drawing.Color]::White
 $resultBox.Font = Get-UiFont 9
 $form.Controls.Add($resultBox)
@@ -959,6 +1063,47 @@ $bootstrapTemplatesButton.Add_Click({
     } catch {
         Update-Status $statusLabel '模板录入失败'
         Show-ErrorDialog ("模板录入失败：`n" + $_.Exception.Message)
+    }
+})
+
+$autoCollectButton.Add_Click({
+    if (-not (Ensure-NotRunning '自动采集素材')) {
+        return
+    }
+
+    if (-not (Ensure-CanRecognize $currentRegion)) {
+        return
+    }
+
+    try {
+        Update-Status $statusLabel '正在采集素材'
+        $payload = Invoke-AutoCollectMaterial -cardCount (Get-SelectedCardCount $modeCombo) -currentRegion $currentRegion -currentPlayPoint $currentPlayPoint
+        if ($null -eq $payload) {
+            Update-Status $statusLabel '采集已取消'
+            return
+        }
+
+        $historyPrefix = if ($payload.status -eq 'imported') {
+            if ($payload.selfHealImportTriggered) { '素材已自修入库' } else { '素材已入库' }
+        } else { '素材待确认' }
+        $dedupeSuffix = if ($payload.handRegionDuplicate) { '（已去重）' } else { '' }
+        Add-History ('{0}{1}：{2}' -f $historyPrefix, $dedupeSuffix, (Format-CardListForDisplay $payload.recognizedCards))
+        $resultBox.Text = Build-AutoCollectLog $payload
+
+        if ($payload.status -eq 'imported') {
+            if ($payload.selfHealImportTriggered) {
+                Update-Status $statusLabel '素材已自修入库'
+            } else {
+                Update-Status $statusLabel '素材已入库'
+            }
+        } else {
+            Update-Status $statusLabel '素材待确认'
+            $manifestHint = if ($payload.pendingManifestPath) { "`n待确认文件：" + $payload.pendingManifestPath } else { '' }
+            Show-WarningDialog ('本次采集已保存，但置信度不足，暂未自动入库。' + $manifestHint)
+        }
+    } catch {
+        Update-Status $statusLabel '采集失败'
+        Show-ErrorDialog ("自动采集素材失败：`n" + $_.Exception.Message)
     }
 })
 

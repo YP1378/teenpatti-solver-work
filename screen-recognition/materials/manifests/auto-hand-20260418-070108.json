@@ -1,0 +1,137 @@
+{
+  "sampleName": "auto-hand-20260418-070108",
+  "sourceImage": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\materials\\inbox\\auto-hand-20260418-070108.png",
+  "savedStripPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\materials\\strips\\auto-hand-20260418-070108.png",
+  "stripDuplicate": false,
+  "stripDuplicateOf": null,
+  "detectionMode": "equal-split",
+  "cardCount": 5,
+  "cards": [
+    {
+      "index": 1,
+      "label": "Qs",
+      "type": "standard",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "width": 76,
+        "height": 101
+      },
+      "savedCardPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\materials\\cards\\Qs\\Qs__auto-hand-20260418-070108__card.png",
+      "cardDuplicate": true,
+      "cardDuplicateOf": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\materials\\cards\\Qs\\Qs__auto-hand-20260418-070108__card.png",
+      "savedRankPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\materials\\ranks\\Q\\Q__auto-hand-20260418-070108__rank.png",
+      "savedSuitPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\materials\\suits\\s\\s__auto-hand-20260418-070108__suit.png",
+      "syncedTemplatePaths": {
+        "rank": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\templates\\ranks\\Q__auto-hand-20260418-070108.png",
+        "suit": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\templates\\suits\\d.png",
+        "card": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\templates\\cards\\Qs__auto-hand-20260418-070108.png"
+      },
+      "rankDuplicate": false,
+      "rankDuplicateOf": null,
+      "suitDuplicate": false,
+      "suitDuplicateOf": null
+    },
+    {
+      "index": 2,
+      "label": "Js",
+      "type": "standard",
+      "bbox": {
+        "x": 76,
+        "y": 0,
+        "width": 76,
+        "height": 101
+      },
+      "savedCardPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\materials\\cards\\Js\\Js__auto-hand-20260418-070108__card.png",
+      "cardDuplicate": true,
+      "cardDuplicateOf": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\materials\\cards\\Js\\Js__auto-hand-20260418-070108__card.png",
+      "savedRankPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\materials\\ranks\\J\\J__auto-hand-20260418-070108__rank.png",
+      "savedSuitPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\materials\\suits\\s\\s__auto-hand-20260418-070108__suit.png",
+      "syncedTemplatePaths": {
+        "rank": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\templates\\ranks\\Q__auto-hand-20260418-070108.png",
+        "suit": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\templates\\suits\\d.png",
+        "card": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\templates\\cards\\Js__auto-hand-20260418-070108.png"
+      },
+      "rankDuplicate": false,
+      "rankDuplicateOf": null,
+      "suitDuplicate": true,
+      "suitDuplicateOf": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\materials\\suits\\s\\s__auto-hand-20260418-070108__suit.png"
+    },
+    {
+      "index": 3,
+      "label": "8s",
+      "type": "standard",
+      "bbox": {
+        "x": 152,
+        "y": 0,
+        "width": 77,
+        "height": 101
+      },
+      "savedCardPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\materials\\cards\\8s\\8s__auto-hand-20260418-070108__card.png",
+      "cardDuplicate": true,
+      "cardDuplicateOf": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\materials\\cards\\8s\\8s__auto-hand-20260418-070108__card.png",
+      "savedRankPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\materials\\ranks\\8\\8__auto-hand-20260418-070108__rank.png",
+      "savedSuitPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\materials\\suits\\s\\s__auto-hand-20260418-070108__suit.png",
+      "syncedTemplatePaths": {
+        "rank": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\templates\\ranks\\Q__auto-hand-20260418-070108.png",
+        "suit": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\templates\\suits\\d.png",
+        "card": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\templates\\cards\\Js__auto-hand-20260418-070108.png"
+      },
+      "rankDuplicate": false,
+      "rankDuplicateOf": null,
+      "suitDuplicate": true,
+      "suitDuplicateOf": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\materials\\suits\\s\\s__auto-hand-20260418-070108__suit.png"
+    },
+    {
+      "index": 4,
+      "label": "Qc",
+      "type": "standard",
+      "bbox": {
+        "x": 229,
+        "y": 0,
+        "width": 76,
+        "height": 101
+      },
+      "savedCardPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\materials\\cards\\Qc\\Qc__auto-hand-20260418-070108__card.png",
+      "cardDuplicate": true,
+      "cardDuplicateOf": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\materials\\cards\\Qc\\Qc__auto-hand-20260418-070108__card.png",
+      "savedRankPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\materials\\ranks\\Q\\Q__auto-hand-20260418-070108__rank_1.png",
+      "savedSuitPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\materials\\suits\\c\\c__auto-hand-20260418-070108__suit.png",
+      "syncedTemplatePaths": {
+        "rank": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\templates\\ranks\\Q__auto-hand-20260418-070108_1.png",
+        "suit": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\templates\\suits\\d.png",
+        "card": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\templates\\cards\\Qc__auto-hand-20260418-070108.png"
+      },
+      "rankDuplicate": false,
+      "rankDuplicateOf": null,
+      "suitDuplicate": false,
+      "suitDuplicateOf": null
+    },
+    {
+      "index": 5,
+      "label": "8c",
+      "type": "standard",
+      "bbox": {
+        "x": 305,
+        "y": 0,
+        "width": 76,
+        "height": 101
+      },
+      "savedCardPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\materials\\cards\\8c\\8c__auto-hand-20260418-070108__card.png",
+      "cardDuplicate": true,
+      "cardDuplicateOf": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\materials\\cards\\8c\\8c__auto-hand-20260418-070108__card.png",
+      "savedRankPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\materials\\ranks\\8\\8__auto-hand-20260418-070108__rank_1.png",
+      "savedSuitPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\materials\\suits\\c\\c__auto-hand-20260418-070108__suit.png",
+      "syncedTemplatePaths": {
+        "rank": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\templates\\ranks\\Q__auto-hand-20260418-070108_1.png",
+        "suit": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\templates\\suits\\d.png",
+        "card": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\templates\\cards\\8c__auto-hand-20260418-070108.png"
+      },
+      "rankDuplicate": false,
+      "rankDuplicateOf": null,
+      "suitDuplicate": true,
+      "suitDuplicateOf": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\screen-recognition\\materials\\suits\\c\\c__auto-hand-20260418-070108__suit.png"
+    }
+  ],
+  "warnings": []
+}

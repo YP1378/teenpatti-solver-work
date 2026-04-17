@@ -50,7 +50,7 @@
 
 ### R-005 桌面助手
 - 提供 Windows 下的 PowerShell + WinForms 小工具。
-- 至少支持：框选手牌区域、设置出牌点、单次识别、录入模板、自动出牌、连续挂机。
+- 至少支持：框选手牌区域、设置出牌点、单次识别、录入模板、自动采集素材、自动出牌、连续挂机。
 
 ### R-006 便携运行
 - 项目支持打包为便携版本。
@@ -120,9 +120,11 @@
   - 自动放入 `screen-recognition/materials/inbox`
   - 会先做原始截图去重，避免同一手牌反复堆积
 - `screen-recognition/auto-collect-material-sample.js`
-  - 一次完成：二次截图、识别、置信度判断、素材入库/待审核落盘
+  - 一次完成：智能连拍、自动择优、候选投票纠偏、自修后直接入库/待审核落盘
   - 低置信度样本进入 `screen-recognition/materials/manifests/*.pending.json`
   - 原始截图阶段和导入阶段都会做去重
+  - 当多次识别结果足够一致时，会自动同步到 `templates`
+  - 其中 `collectMaterialSample / buildConsensusRepair / runImportStrip` 已抽成程序内建能力，可被其他入口直接复用
 - `screen-recognition/import-strip-templates.py`
   - 从一张横向多牌素材图里自动分卡
   - 自动裁出整牌 / rank / suit 素材
@@ -132,7 +134,7 @@
 ### 7. 桌面助手 UI
 - `screen-card-helper.ps1`
   - 主开发脚本
-  - WinForms 按钮、日志、状态、自动出牌逻辑都在这里
+  - WinForms 按钮、日志、状态、自动采集素材、自动出牌逻辑都在这里
 - `屏幕识牌助手.ps1`
   - 中文入口镜像脚本
   - 与上面脚本必须保持同步
@@ -174,7 +176,7 @@
 - 安装依赖：`npm install`
 - 启动桌面助手：`npm run screen-ui`
 - 按当前已框选区域二次截图并保存样本：`npm run capture:hand-sample`
-- 自动采集素材（截图 + 识别 + 去重 + 入库/待审核）：`npm run collect:auto`
+- 自动采集素材（智能连拍 + 候选投票纠偏 + 自修直入库/待审核）：`npm run collect:auto`
 - 打包便携版：`npm run build:portable`
 
 ---
@@ -236,6 +238,16 @@
 - `materials/inbox` 里的原始手牌截图不能无限堆积重复图。
 - `capture-hand-region-sample.js` 与 `auto-collect-material-sample.js` 的原始截图阶段都要做去重。
 - `import-strip-templates.py` 负责素材级去重；不要只做后半段去重，导致前半段原图目录持续膨胀。
+
+### H-013 自动采集优先选“最稳的一帧”，不要只截一张就决定
+- 当前 `auto-collect-material-sample.js` 默认会连续截图 3 次，并自动选择综合置信度最高的一次。
+- 目的不是堆更多图片，而是绕开翻牌动画、发光特效、半遮挡这些瞬态干扰。
+- 后续如果继续改自动采集，优先保留“多次采集 -> 自动择优 -> 再入库”的链路，不要退回单帧决策。
+
+### H-014 自动采集允许“自修直入库”，但必须基于多次一致性和候选投票
+- 当前 `auto-collect-material-sample.js` 不再只依赖单次识别结果，而会综合多次截图的候选标签做投票纠偏。
+- 只有当多次识别足够一致时，才允许自动直入库，并可顺手同步到 `templates`。
+- 如果未来继续增强这条链路，核心原则是“多次一致性优先”，不要退回“低置信度也盲目直接写模板”。
 
 ---
 
