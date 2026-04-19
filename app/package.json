@@ -1,0 +1,40 @@
+﻿{
+    "name":  "teenpattisolver",
+    "version":  "1.1.2",
+    "description":  "Teen Patti Solver for Node.Js",
+    "main":  "index.js",
+    "scripts":  {
+                    "test":  "echo \"Error: no test specified\" \u0026\u0026 exit 1",
+                    "cmd":  "node cmd-game.js",
+                    "play":  "node cmd-game.js",
+                    "screen-ui":  "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./screen-card-helper.ps1",
+                    "capture:hand-sample":  "node ./screen-recognition/capture-hand-region-sample.js",
+                    "build:portable":  "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./tools/build-portable.ps1",
+                    "import:randomorg":  "node ./tools/import-random-org-playing-cards.js",
+                    "smoke:randomorg":  "node ./tools/random-org-smoke-test.js"
+                },
+    "repository":  {
+                       "type":  "git",
+                       "url":  "git+https://github.com/WohligTechnology/teenpatti-solver.git"
+                   },
+    "author":  "Chintan Shah",
+    "license":  "ISC",
+    "bugs":  {
+                 "url":  "https://github.com/WohligTechnology/teenpatti-solver/issues"
+             },
+    "homepage":  "https://github.com/WohligTechnology/teenpatti-solver#readme",
+    "dependencies":  {
+                         "jimp":  "^0.22.12",
+                         "js-combinatorics":  "^0.5.2",
+                         "lodash":  "^4.17.4"
+                     },
+    "keywords":  [
+                     "teen patti",
+                     "teenpatti",
+                     "nodejs",
+                     "4 cards",
+                     "lowest teen patti",
+                     "2 cards",
+                     "joker"
+                 ]
+}

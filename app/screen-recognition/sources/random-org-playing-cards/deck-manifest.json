@@ -1,0 +1,981 @@
+{
+  "source": {
+    "page": "https://www.random.org/playing-cards/",
+    "imageBaseUrl": "https://www.random.org/playing-cards/",
+    "credits": [
+      "https://www.random.org/playing-cards/",
+      "https://dataswamp.org/~john/sites/cards/"
+    ]
+  },
+  "generatedAt": "2026-04-18T22:19:44.982Z",
+  "layout": {
+    "cardWidth": 72,
+    "cardHeight": 96,
+    "rankRegion": {
+      "x": 4,
+      "y": 5,
+      "width": 12,
+      "height": 18
+    },
+    "suitRegion": {
+      "x": 9,
+      "y": 19,
+      "width": 13,
+      "height": 17
+    }
+  },
+  "cards": [
+    {
+      "fileName": "1.png",
+      "code": "Ac",
+      "rank": "A",
+      "suit": "c",
+      "title": "Ace of Clubs",
+      "url": "https://www.random.org/playing-cards/1.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\1.png"
+    },
+    {
+      "fileName": "2.png",
+      "code": "As",
+      "rank": "A",
+      "suit": "s",
+      "title": "Ace of Spades",
+      "url": "https://www.random.org/playing-cards/2.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\2.png"
+    },
+    {
+      "fileName": "3.png",
+      "code": "Ah",
+      "rank": "A",
+      "suit": "h",
+      "title": "Ace of Hearts",
+      "url": "https://www.random.org/playing-cards/3.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\3.png"
+    },
+    {
+      "fileName": "4.png",
+      "code": "Ad",
+      "rank": "A",
+      "suit": "d",
+      "title": "Ace of Diamonds",
+      "url": "https://www.random.org/playing-cards/4.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\4.png"
+    },
+    {
+      "fileName": "5.png",
+      "code": "Kc",
+      "rank": "K",
+      "suit": "c",
+      "title": "King of Clubs",
+      "url": "https://www.random.org/playing-cards/5.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\5.png"
+    },
+    {
+      "fileName": "6.png",
+      "code": "Ks",
+      "rank": "K",
+      "suit": "s",
+      "title": "King of Spades",
+      "url": "https://www.random.org/playing-cards/6.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\6.png"
+    },
+    {
+      "fileName": "7.png",
+      "code": "Kh",
+      "rank": "K",
+      "suit": "h",
+      "title": "King of Hearts",
+      "url": "https://www.random.org/playing-cards/7.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\7.png"
+    },
+    {
+      "fileName": "8.png",
+      "code": "Kd",
+      "rank": "K",
+      "suit": "d",
+      "title": "King of Diamonds",
+      "url": "https://www.random.org/playing-cards/8.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\8.png"
+    },
+    {
+      "fileName": "9.png",
+      "code": "Qc",
+      "rank": "Q",
+      "suit": "c",
+      "title": "Queen of Clubs",
+      "url": "https://www.random.org/playing-cards/9.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\9.png"
+    },
+    {
+      "fileName": "10.png",
+      "code": "Qs",
+      "rank": "Q",
+      "suit": "s",
+      "title": "Queen of Spades",
+      "url": "https://www.random.org/playing-cards/10.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\10.png"
+    },
+    {
+      "fileName": "11.png",
+      "code": "Qh",
+      "rank": "Q",
+      "suit": "h",
+      "title": "Queen of Hearts",
+      "url": "https://www.random.org/playing-cards/11.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\11.png"
+    },
+    {
+      "fileName": "12.png",
+      "code": "Qd",
+      "rank": "Q",
+      "suit": "d",
+      "title": "Queen of Diamonds",
+      "url": "https://www.random.org/playing-cards/12.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\12.png"
+    },
+    {
+      "fileName": "13.png",
+      "code": "Jc",
+      "rank": "J",
+      "suit": "c",
+      "title": "Jack of Clubs",
+      "url": "https://www.random.org/playing-cards/13.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\13.png"
+    },
+    {
+      "fileName": "14.png",
+      "code": "Js",
+      "rank": "J",
+      "suit": "s",
+      "title": "Jack of Spades",
+      "url": "https://www.random.org/playing-cards/14.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\14.png"
+    },
+    {
+      "fileName": "15.png",
+      "code": "Jh",
+      "rank": "J",
+      "suit": "h",
+      "title": "Jack of Hearts",
+      "url": "https://www.random.org/playing-cards/15.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\15.png"
+    },
+    {
+      "fileName": "16.png",
+      "code": "Jd",
+      "rank": "J",
+      "suit": "d",
+      "title": "Jack of Diamonds",
+      "url": "https://www.random.org/playing-cards/16.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\16.png"
+    },
+    {
+      "fileName": "17.png",
+      "code": "Tc",
+      "rank": "T",
+      "suit": "c",
+      "title": "Ten of Clubs",
+      "url": "https://www.random.org/playing-cards/17.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\17.png"
+    },
+    {
+      "fileName": "18.png",
+      "code": "Ts",
+      "rank": "T",
+      "suit": "s",
+      "title": "Ten of Spades",
+      "url": "https://www.random.org/playing-cards/18.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\18.png"
+    },
+    {
+      "fileName": "19.png",
+      "code": "Th",
+      "rank": "T",
+      "suit": "h",
+      "title": "Ten of Hearts",
+      "url": "https://www.random.org/playing-cards/19.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\19.png"
+    },
+    {
+      "fileName": "20.png",
+      "code": "Td",
+      "rank": "T",
+      "suit": "d",
+      "title": "Ten of Diamonds",
+      "url": "https://www.random.org/playing-cards/20.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\20.png"
+    },
+    {
+      "fileName": "21.png",
+      "code": "9c",
+      "rank": "9",
+      "suit": "c",
+      "title": "Nine of Clubs",
+      "url": "https://www.random.org/playing-cards/21.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\21.png"
+    },
+    {
+      "fileName": "22.png",
+      "code": "9s",
+      "rank": "9",
+      "suit": "s",
+      "title": "Nine of Spades",
+      "url": "https://www.random.org/playing-cards/22.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\22.png"
+    },
+    {
+      "fileName": "23.png",
+      "code": "9h",
+      "rank": "9",
+      "suit": "h",
+      "title": "Nine of Hearts",
+      "url": "https://www.random.org/playing-cards/23.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\23.png"
+    },
+    {
+      "fileName": "24.png",
+      "code": "9d",
+      "rank": "9",
+      "suit": "d",
+      "title": "Nine of Diamonds",
+      "url": "https://www.random.org/playing-cards/24.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\24.png"
+    },
+    {
+      "fileName": "25.png",
+      "code": "8c",
+      "rank": "8",
+      "suit": "c",
+      "title": "Eight of Clubs",
+      "url": "https://www.random.org/playing-cards/25.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\25.png"
+    },
+    {
+      "fileName": "26.png",
+      "code": "8s",
+      "rank": "8",
+      "suit": "s",
+      "title": "Eight of Spades",
+      "url": "https://www.random.org/playing-cards/26.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\26.png"
+    },
+    {
+      "fileName": "27.png",
+      "code": "8h",
+      "rank": "8",
+      "suit": "h",
+      "title": "Eight of Hearts",
+      "url": "https://www.random.org/playing-cards/27.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\27.png"
+    },
+    {
+      "fileName": "28.png",
+      "code": "8d",
+      "rank": "8",
+      "suit": "d",
+      "title": "Eight of Diamonds",
+      "url": "https://www.random.org/playing-cards/28.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\28.png"
+    },
+    {
+      "fileName": "29.png",
+      "code": "7c",
+      "rank": "7",
+      "suit": "c",
+      "title": "Seven of Clubs",
+      "url": "https://www.random.org/playing-cards/29.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\29.png"
+    },
+    {
+      "fileName": "30.png",
+      "code": "7s",
+      "rank": "7",
+      "suit": "s",
+      "title": "Seven of Spades",
+      "url": "https://www.random.org/playing-cards/30.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\30.png"
+    },
+    {
+      "fileName": "31.png",
+      "code": "7h",
+      "rank": "7",
+      "suit": "h",
+      "title": "Seven of Hearts",
+      "url": "https://www.random.org/playing-cards/31.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\31.png"
+    },
+    {
+      "fileName": "32.png",
+      "code": "7d",
+      "rank": "7",
+      "suit": "d",
+      "title": "Seven of Diamonds",
+      "url": "https://www.random.org/playing-cards/32.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\32.png"
+    },
+    {
+      "fileName": "33.png",
+      "code": "6c",
+      "rank": "6",
+      "suit": "c",
+      "title": "Six of Clubs",
+      "url": "https://www.random.org/playing-cards/33.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\33.png"
+    },
+    {
+      "fileName": "34.png",
+      "code": "6s",
+      "rank": "6",
+      "suit": "s",
+      "title": "Six of Spades",
+      "url": "https://www.random.org/playing-cards/34.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\34.png"
+    },
+    {
+      "fileName": "35.png",
+      "code": "6h",
+      "rank": "6",
+      "suit": "h",
+      "title": "Six of Hearts",
+      "url": "https://www.random.org/playing-cards/35.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\35.png"
+    },
+    {
+      "fileName": "36.png",
+      "code": "6d",
+      "rank": "6",
+      "suit": "d",
+      "title": "Six of Diamonds",
+      "url": "https://www.random.org/playing-cards/36.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\36.png"
+    },
+    {
+      "fileName": "37.png",
+      "code": "5c",
+      "rank": "5",
+      "suit": "c",
+      "title": "Five of Clubs",
+      "url": "https://www.random.org/playing-cards/37.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\37.png"
+    },
+    {
+      "fileName": "38.png",
+      "code": "5s",
+      "rank": "5",
+      "suit": "s",
+      "title": "Five of Spades",
+      "url": "https://www.random.org/playing-cards/38.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\38.png"
+    },
+    {
+      "fileName": "39.png",
+      "code": "5h",
+      "rank": "5",
+      "suit": "h",
+      "title": "Five of Hearts",
+      "url": "https://www.random.org/playing-cards/39.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\39.png"
+    },
+    {
+      "fileName": "40.png",
+      "code": "5d",
+      "rank": "5",
+      "suit": "d",
+      "title": "Five of Diamonds",
+      "url": "https://www.random.org/playing-cards/40.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\40.png"
+    },
+    {
+      "fileName": "41.png",
+      "code": "4c",
+      "rank": "4",
+      "suit": "c",
+      "title": "Four of Clubs",
+      "url": "https://www.random.org/playing-cards/41.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\41.png"
+    },
+    {
+      "fileName": "42.png",
+      "code": "4s",
+      "rank": "4",
+      "suit": "s",
+      "title": "Four of Spades",
+      "url": "https://www.random.org/playing-cards/42.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\42.png"
+    },
+    {
+      "fileName": "43.png",
+      "code": "4h",
+      "rank": "4",
+      "suit": "h",
+      "title": "Four of Hearts",
+      "url": "https://www.random.org/playing-cards/43.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\43.png"
+    },
+    {
+      "fileName": "44.png",
+      "code": "4d",
+      "rank": "4",
+      "suit": "d",
+      "title": "Four of Diamonds",
+      "url": "https://www.random.org/playing-cards/44.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\44.png"
+    },
+    {
+      "fileName": "45.png",
+      "code": "3c",
+      "rank": "3",
+      "suit": "c",
+      "title": "Three of Clubs",
+      "url": "https://www.random.org/playing-cards/45.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\45.png"
+    },
+    {
+      "fileName": "46.png",
+      "code": "3s",
+      "rank": "3",
+      "suit": "s",
+      "title": "Three of Spades",
+      "url": "https://www.random.org/playing-cards/46.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\46.png"
+    },
+    {
+      "fileName": "47.png",
+      "code": "3h",
+      "rank": "3",
+      "suit": "h",
+      "title": "Three of Hearts",
+      "url": "https://www.random.org/playing-cards/47.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\47.png"
+    },
+    {
+      "fileName": "48.png",
+      "code": "3d",
+      "rank": "3",
+      "suit": "d",
+      "title": "Three of Diamonds",
+      "url": "https://www.random.org/playing-cards/48.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\48.png"
+    },
+    {
+      "fileName": "49.png",
+      "code": "2c",
+      "rank": "2",
+      "suit": "c",
+      "title": "Two of Clubs",
+      "url": "https://www.random.org/playing-cards/49.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\49.png"
+    },
+    {
+      "fileName": "50.png",
+      "code": "2s",
+      "rank": "2",
+      "suit": "s",
+      "title": "Two of Spades",
+      "url": "https://www.random.org/playing-cards/50.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\50.png"
+    },
+    {
+      "fileName": "51.png",
+      "code": "2h",
+      "rank": "2",
+      "suit": "h",
+      "title": "Two of Hearts",
+      "url": "https://www.random.org/playing-cards/51.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\51.png"
+    },
+    {
+      "fileName": "52.png",
+      "code": "2d",
+      "rank": "2",
+      "suit": "d",
+      "title": "Two of Diamonds",
+      "url": "https://www.random.org/playing-cards/52.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\52.png"
+    }
+  ],
+  "extras": [
+    {
+      "fileName": "53.png",
+      "label": "black-joker",
+      "title": "Black Joker",
+      "url": "https://www.random.org/playing-cards/53.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\53.png"
+    },
+    {
+      "fileName": "54.png",
+      "label": "red-joker",
+      "title": "Red Joker",
+      "url": "https://www.random.org/playing-cards/54.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\54.png"
+    },
+    {
+      "fileName": "b1fv.png",
+      "label": "remaining-stack-front",
+      "title": "Remaining Stack Front",
+      "url": "https://www.random.org/playing-cards/b1fv.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\b1fv.png"
+    },
+    {
+      "fileName": "b1pr.png",
+      "label": "remaining-stack-repeat",
+      "title": "Remaining Stack Repeat",
+      "url": "https://www.random.org/playing-cards/b1pr.png",
+      "localPath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\b1pr.png"
+    }
+  ],
+  "generated": {
+    "cards": [
+      {
+        "code": "Ac",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\Ac__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\1.png"
+      },
+      {
+        "code": "As",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\As__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\2.png"
+      },
+      {
+        "code": "Ah",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\Ah__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\3.png"
+      },
+      {
+        "code": "Ad",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\Ad__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\4.png"
+      },
+      {
+        "code": "Kc",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\Kc__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\5.png"
+      },
+      {
+        "code": "Ks",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\Ks__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\6.png"
+      },
+      {
+        "code": "Kh",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\Kh__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\7.png"
+      },
+      {
+        "code": "Kd",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\Kd__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\8.png"
+      },
+      {
+        "code": "Qc",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\Qc__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\9.png"
+      },
+      {
+        "code": "Qs",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\Qs__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\10.png"
+      },
+      {
+        "code": "Qh",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\Qh__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\11.png"
+      },
+      {
+        "code": "Qd",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\Qd__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\12.png"
+      },
+      {
+        "code": "Jc",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\Jc__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\13.png"
+      },
+      {
+        "code": "Js",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\Js__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\14.png"
+      },
+      {
+        "code": "Jh",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\Jh__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\15.png"
+      },
+      {
+        "code": "Jd",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\Jd__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\16.png"
+      },
+      {
+        "code": "Tc",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\Tc__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\17.png"
+      },
+      {
+        "code": "Ts",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\Ts__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\18.png"
+      },
+      {
+        "code": "Th",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\Th__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\19.png"
+      },
+      {
+        "code": "Td",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\Td__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\20.png"
+      },
+      {
+        "code": "9c",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\9c__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\21.png"
+      },
+      {
+        "code": "9s",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\9s__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\22.png"
+      },
+      {
+        "code": "9h",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\9h__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\23.png"
+      },
+      {
+        "code": "9d",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\9d__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\24.png"
+      },
+      {
+        "code": "8c",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\8c__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\25.png"
+      },
+      {
+        "code": "8s",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\8s__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\26.png"
+      },
+      {
+        "code": "8h",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\8h__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\27.png"
+      },
+      {
+        "code": "8d",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\8d__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\28.png"
+      },
+      {
+        "code": "7c",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\7c__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\29.png"
+      },
+      {
+        "code": "7s",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\7s__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\30.png"
+      },
+      {
+        "code": "7h",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\7h__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\31.png"
+      },
+      {
+        "code": "7d",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\7d__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\32.png"
+      },
+      {
+        "code": "6c",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\6c__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\33.png"
+      },
+      {
+        "code": "6s",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\6s__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\34.png"
+      },
+      {
+        "code": "6h",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\6h__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\35.png"
+      },
+      {
+        "code": "6d",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\6d__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\36.png"
+      },
+      {
+        "code": "5c",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\5c__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\37.png"
+      },
+      {
+        "code": "5s",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\5s__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\38.png"
+      },
+      {
+        "code": "5h",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\5h__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\39.png"
+      },
+      {
+        "code": "5d",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\5d__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\40.png"
+      },
+      {
+        "code": "4c",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\4c__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\41.png"
+      },
+      {
+        "code": "4s",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\4s__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\42.png"
+      },
+      {
+        "code": "4h",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\4h__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\43.png"
+      },
+      {
+        "code": "4d",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\4d__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\44.png"
+      },
+      {
+        "code": "3c",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\3c__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\45.png"
+      },
+      {
+        "code": "3s",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\3s__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\46.png"
+      },
+      {
+        "code": "3h",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\3h__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\47.png"
+      },
+      {
+        "code": "3d",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\3d__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\48.png"
+      },
+      {
+        "code": "2c",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\2c__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\49.png"
+      },
+      {
+        "code": "2s",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\2s__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\50.png"
+      },
+      {
+        "code": "2h",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\2h__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\51.png"
+      },
+      {
+        "code": "2d",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\2d__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\52.png"
+      },
+      {
+        "code": "black-joker",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\black-joker__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\53.png"
+      },
+      {
+        "code": "red-joker",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\cards\\red-joker__random-org.png",
+        "sourcePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\sources\\random-org-playing-cards\\raw\\54.png"
+      }
+    ],
+    "ranks": [
+      {
+        "label": "A",
+        "family": "black",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\ranks\\A__random-org-black.png",
+        "sourceCode": "Ac"
+      },
+      {
+        "label": "A",
+        "family": "red",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\ranks\\A__random-org-red.png",
+        "sourceCode": "Ah"
+      },
+      {
+        "label": "K",
+        "family": "black",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\ranks\\K__random-org-black.png",
+        "sourceCode": "Kc"
+      },
+      {
+        "label": "K",
+        "family": "red",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\ranks\\K__random-org-red.png",
+        "sourceCode": "Kh"
+      },
+      {
+        "label": "Q",
+        "family": "black",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\ranks\\Q__random-org-black.png",
+        "sourceCode": "Qc"
+      },
+      {
+        "label": "Q",
+        "family": "red",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\ranks\\Q__random-org-red.png",
+        "sourceCode": "Qh"
+      },
+      {
+        "label": "J",
+        "family": "black",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\ranks\\J__random-org-black.png",
+        "sourceCode": "Jc"
+      },
+      {
+        "label": "J",
+        "family": "red",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\ranks\\J__random-org-red.png",
+        "sourceCode": "Jh"
+      },
+      {
+        "label": "T",
+        "family": "black",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\ranks\\T__random-org-black.png",
+        "sourceCode": "Tc"
+      },
+      {
+        "label": "T",
+        "family": "red",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\ranks\\T__random-org-red.png",
+        "sourceCode": "Th"
+      },
+      {
+        "label": "9",
+        "family": "black",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\ranks\\9__random-org-black.png",
+        "sourceCode": "9c"
+      },
+      {
+        "label": "9",
+        "family": "red",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\ranks\\9__random-org-red.png",
+        "sourceCode": "9h"
+      },
+      {
+        "label": "8",
+        "family": "black",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\ranks\\8__random-org-black.png",
+        "sourceCode": "8c"
+      },
+      {
+        "label": "8",
+        "family": "red",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\ranks\\8__random-org-red.png",
+        "sourceCode": "8h"
+      },
+      {
+        "label": "7",
+        "family": "black",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\ranks\\7__random-org-black.png",
+        "sourceCode": "7c"
+      },
+      {
+        "label": "7",
+        "family": "red",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\ranks\\7__random-org-red.png",
+        "sourceCode": "7h"
+      },
+      {
+        "label": "6",
+        "family": "black",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\ranks\\6__random-org-black.png",
+        "sourceCode": "6c"
+      },
+      {
+        "label": "6",
+        "family": "red",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\ranks\\6__random-org-red.png",
+        "sourceCode": "6h"
+      },
+      {
+        "label": "5",
+        "family": "black",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\ranks\\5__random-org-black.png",
+        "sourceCode": "5c"
+      },
+      {
+        "label": "5",
+        "family": "red",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\ranks\\5__random-org-red.png",
+        "sourceCode": "5h"
+      },
+      {
+        "label": "4",
+        "family": "black",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\ranks\\4__random-org-black.png",
+        "sourceCode": "4c"
+      },
+      {
+        "label": "4",
+        "family": "red",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\ranks\\4__random-org-red.png",
+        "sourceCode": "4h"
+      },
+      {
+        "label": "3",
+        "family": "black",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\ranks\\3__random-org-black.png",
+        "sourceCode": "3c"
+      },
+      {
+        "label": "3",
+        "family": "red",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\ranks\\3__random-org-red.png",
+        "sourceCode": "3h"
+      },
+      {
+        "label": "2",
+        "family": "black",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\ranks\\2__random-org-black.png",
+        "sourceCode": "2c"
+      },
+      {
+        "label": "2",
+        "family": "red",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\ranks\\2__random-org-red.png",
+        "sourceCode": "2h"
+      }
+    ],
+    "suits": [
+      {
+        "label": "c",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\suits\\c__random-org.png",
+        "sourceCode": "Ac"
+      },
+      {
+        "label": "s",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\suits\\s__random-org.png",
+        "sourceCode": "As"
+      },
+      {
+        "label": "h",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\suits\\h__random-org.png",
+        "sourceCode": "Ah"
+      },
+      {
+        "label": "d",
+        "templatePath": "D:\\A1\\CodeProjects\\ZhaJinHuaJHJ\\teenpatti-solver-work\\app\\screen-recognition\\templates\\suits\\d__random-org.png",
+        "sourceCode": "Ad"
+      }
+    ]
+  }
+}
