@@ -10,6 +10,9 @@ app/screen-recognition/builtin-font-templates/
 app/screen-recognition/_last-ui-output.json
 app/screen-recognition/last-*.json
 app/screen-recognition/last-*.log
+app/screen-recognition/logs/
+app/screen-recognition/recognition-backend-state.json
+app/screen-recognition/ui-recognize-service-state.json
 app/screen-recognition/manual-json-out.json
 app/screen-recognition/materials/inbox/*.png
 app/screen-recognition/materials/manifests/*.pending.json

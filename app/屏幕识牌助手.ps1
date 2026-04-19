@@ -19,6 +19,9 @@ $script:MouseLeftUp = 0x0004
 $script:ProjectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $script:StatePath = Join-Path $script:ProjectRoot 'screen-recognition\ui-state.json'
 $script:NodeScriptPath = Join-Path $script:ProjectRoot 'screen-recognition\ui-recognize.js'
+$script:RecognitionClientScriptPath = Join-Path $script:ProjectRoot 'screen-recognition\ui-recognize-client.js'
+$script:RecognitionServiceScriptPath = Join-Path $script:ProjectRoot 'screen-recognition\ui-recognize-service.js'
+$script:RecognitionServiceStateFilePath = Join-Path $script:ProjectRoot 'screen-recognition\ui-recognize-service-state.json'
 $script:BundledNodePath = Join-Path $script:ProjectRoot 'runtime\node\node.exe'
 $script:LatestScreenPath = Join-Path $script:ProjectRoot 'screen-recognition\latest-screen.png'
 $script:RankTemplatesDir = Join-Path $script:ProjectRoot 'screen-recognition\templates\ranks'
@@ -35,6 +38,30 @@ $script:LoopState = [PSCustomObject]@{
     LastActionSignature = $null
 }
 $script:HistoryLines = New-Object 'System.Collections.Generic.List[string]'
+$script:UiEnvironmentCache = [PSCustomObject]@{
+    LastRefresh = [DateTime]::MinValue
+    NodePath = $null
+    HasNode = $false
+    HasTemplates = $false
+}
+$script:UiEnvironmentCacheTtlMs = 2500
+$script:RegionListRenderState = [PSCustomObject]@{
+    Updating = $false
+    Signature = ''
+    SelectedIndex = -2147483648
+}
+$script:ResultLogBox = $null
+$script:ResultMainText = ''
+$script:MaxHistoryLineCount = 24
+$script:ProjectLogDirectory = Join-Path $script:ProjectRoot 'screen-recognition\logs'
+$script:ProjectLogDate = ''
+$script:ProjectLogPath = $null
+$script:RecognitionBackendPreference = 'auto'
+$script:RecognitionBackendCooldownUntil = [DateTime]::MinValue
+$script:RecognitionBackendCooldownMs = 600000
+$script:RecognitionBackendReason = $null
+$script:RecognitionBackendStatePath = Join-Path $script:ProjectRoot 'screen-recognition\recognition-backend-state.json'
+$script:RecognitionServiceStartTimeoutMs = 12000
 
 function Get-UiFont([float]$size, [System.Drawing.FontStyle]$style = [System.Drawing.FontStyle]::Regular) {
     return New-Object System.Drawing.Font('Microsoft YaHei UI', $size, $style)
@@ -53,10 +80,204 @@ function Show-WarningDialog([string]$message) {
     [System.Windows.Forms.MessageBox]::Show($message, '屏幕识牌助手', [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning) | Out-Null
 }
 
+function Enable-DoubleBuffer([System.Windows.Forms.Control]$control) {
+    if ($null -eq $control) {
+        return
+    }
+
+    try {
+        $bindingFlags = [System.Reflection.BindingFlags]::Instance -bor [System.Reflection.BindingFlags]::NonPublic -bor [System.Reflection.BindingFlags]::SetProperty
+        $control.GetType().InvokeMember('DoubleBuffered', $bindingFlags, $null, $control, @($true)) | Out-Null
+    } catch {
+    }
+}
+
 function Ensure-ParentDirectory([string]$filePath) {
     $parent = Split-Path -Parent $filePath
     if (-not (Test-Path $parent)) {
         New-Item -ItemType Directory -Path $parent -Force | Out-Null
+    }
+}
+
+function Get-RecognitionServiceLogPaths {
+    $stdoutPath = Join-Path $script:ProjectLogDirectory 'ui-recognize-service-stdout.log'
+    $stderrPath = Join-Path $script:ProjectLogDirectory 'ui-recognize-service-stderr.log'
+    Ensure-ParentDirectory $stdoutPath
+    return [PSCustomObject]@{
+        StdoutPath = $stdoutPath
+        StderrPath = $stderrPath
+    }
+}
+
+function Get-RecognitionServiceState {
+    if (-not (Test-Path $script:RecognitionServiceStateFilePath)) {
+        return $null
+    }
+
+    try {
+        $content = Get-Content -LiteralPath $script:RecognitionServiceStateFilePath -Raw -Encoding UTF8
+        if ([string]::IsNullOrWhiteSpace($content)) {
+            return $null
+        }
+
+        return (ConvertFrom-JsonCompat -jsonText $content -Depth 10)
+    } catch {
+        return $null
+    }
+}
+
+function Test-RecognitionServiceProcessAlive($state) {
+    if ($null -eq $state -or $null -eq $state.pid) {
+        return $false
+    }
+
+    try {
+        $process = Get-Process -Id ([int]$state.pid) -ErrorAction Stop
+        return ($null -ne $process -and -not $process.HasExited)
+    } catch {
+        return $false
+    }
+}
+
+function Test-RecognitionServiceHealthy($state) {
+    if ($null -eq $state -or [string]::IsNullOrWhiteSpace([string]$state.url)) {
+        return $false
+    }
+
+    if (-not (Test-RecognitionServiceProcessAlive $state)) {
+        return $false
+    }
+
+    try {
+        $health = Invoke-RestMethod -Uri (([string]$state.url).TrimEnd('/') + '/health') -Method Get -TimeoutSec 3
+        return ($null -ne $health -and $health.ok)
+    } catch {
+        return $false
+    }
+}
+
+function Remove-RecognitionServiceStateFile {
+    if (Test-Path $script:RecognitionServiceStateFilePath) {
+        Remove-Item -LiteralPath $script:RecognitionServiceStateFilePath -Force -ErrorAction SilentlyContinue
+    }
+}
+
+function Ensure-RecognitionService([string]$nodeCommand) {
+    $existingState = Get-RecognitionServiceState
+    if (Test-RecognitionServiceHealthy $existingState) {
+        return $existingState
+    }
+
+    Remove-RecognitionServiceStateFile
+    $logPaths = Get-RecognitionServiceLogPaths
+    $startInfo = New-Object System.Diagnostics.ProcessStartInfo
+    $startInfo.FileName = $nodeCommand
+    $startInfo.UseShellExecute = $false
+    $startInfo.RedirectStandardOutput = $true
+    $startInfo.RedirectStandardError = $true
+    $startInfo.CreateNoWindow = $true
+    $serviceArgs = @(
+        $script:RecognitionServiceScriptPath,
+        '--state-file', $script:RecognitionServiceStateFilePath
+    )
+    $startInfo.Arguments = (($serviceArgs | ForEach-Object { ConvertTo-ProcessArgument ([string]$_) }) -join ' ')
+
+    $process = New-Object System.Diagnostics.Process
+    $process.StartInfo = $startInfo
+    if (-not $process.Start()) {
+        $process.Dispose()
+        throw '无法启动常驻识别服务。'
+    }
+
+    $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+    $stderrTask = $process.StandardError.ReadToEndAsync()
+    $deadline = [DateTime]::UtcNow.AddMilliseconds($script:RecognitionServiceStartTimeoutMs)
+    $serviceState = $null
+    while ([DateTime]::UtcNow -lt $deadline) {
+        Start-Sleep -Milliseconds 120
+        $serviceState = Get-RecognitionServiceState
+        if (Test-RecognitionServiceHealthy $serviceState) {
+            Write-ProjectLog -level 'INFO' -message '常驻识别服务已启动' -data ([ordered]@{
+                pid = $serviceState.pid
+                url = $serviceState.url
+            })
+            return $serviceState
+        }
+
+        if ($process.HasExited) {
+            break
+        }
+    }
+
+    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    try {
+        [System.IO.File]::WriteAllText($logPaths.StdoutPath, $stdoutTask.GetAwaiter().GetResult(), $utf8NoBom)
+    } catch {
+    }
+    try {
+        [System.IO.File]::WriteAllText($logPaths.StderrPath, $stderrTask.GetAwaiter().GetResult(), $utf8NoBom)
+    } catch {
+    }
+
+    if (-not $process.HasExited) {
+        try { $process.Kill() } catch {}
+    }
+    $process.Dispose()
+    throw ('常驻识别服务启动失败。请检查日志：{0} / {1}' -f $logPaths.StdoutPath, $logPaths.StderrPath)
+}
+
+function Get-ProjectLogPath {
+    $dateText = (Get-Date).ToString('yyyyMMdd')
+    if ($script:ProjectLogDate -ne $dateText -or [string]::IsNullOrWhiteSpace($script:ProjectLogPath)) {
+        $script:ProjectLogDate = $dateText
+        $script:ProjectLogPath = Join-Path $script:ProjectLogDirectory ('ui-runtime-' + $dateText + '.log')
+    }
+
+    Ensure-ParentDirectory $script:ProjectLogPath
+    return $script:ProjectLogPath
+}
+
+function ConvertTo-LogDataText($data) {
+    if ($null -eq $data) {
+        return ''
+    }
+
+    if ($data -is [string]) {
+        return [string]$data
+    }
+
+    try {
+        return (($data | ConvertTo-Json -Depth 10 -Compress))
+    } catch {
+        return [string]$data
+    }
+}
+
+function Write-ProjectLog([string]$level = 'INFO', [string]$message, $data = $null) {
+    try {
+        $line = ('[{0}] [{1}] {2}' -f (Get-Date).ToString('yyyy-MM-dd HH:mm:ss.fff'), $level.ToUpperInvariant(), $message)
+        $dataText = ConvertTo-LogDataText $data
+        if (-not [string]::IsNullOrWhiteSpace($dataText)) {
+            $line += ' | ' + $dataText
+        }
+
+        $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+        [System.IO.File]::AppendAllText((Get-ProjectLogPath), ($line + [Environment]::NewLine), $utf8NoBom)
+    } catch {
+    }
+}
+
+function Get-ErrorRecordLogData($errorRecord) {
+    if ($null -eq $errorRecord) {
+        return $null
+    }
+
+    return [ordered]@{
+        message = if ($null -ne $errorRecord.Exception) { [string]$errorRecord.Exception.Message } else { [string]$errorRecord }
+        exceptionType = if ($null -ne $errorRecord.Exception) { [string]$errorRecord.Exception.GetType().FullName } else { $null }
+        category = if ($null -ne $errorRecord.CategoryInfo) { [string]$errorRecord.CategoryInfo } else { $null }
+        scriptStackTrace = if ($null -ne $errorRecord.ScriptStackTrace) { [string]$errorRecord.ScriptStackTrace } else { $null }
+        positionMessage = if ($null -ne $errorRecord.InvocationInfo) { [string]$errorRecord.InvocationInfo.PositionMessage } else { $null }
     }
 }
 
@@ -184,10 +405,27 @@ function ConvertFrom-JsonCompat([string]$jsonText, [int]$Depth = 32) {
     return ($jsonText | ConvertFrom-Json)
 }
 
+function Test-DirectoryHasImageFile([string]$directoryPath) {
+    if ([string]::IsNullOrWhiteSpace($directoryPath) -or -not (Test-Path $directoryPath)) {
+        return $false
+    }
+
+    foreach ($pattern in @('*.png', '*.jpg', '*.jpeg', '*.bmp')) {
+        try {
+            foreach ($filePath in [System.IO.Directory]::EnumerateFiles($directoryPath, $pattern, [System.IO.SearchOption]::TopDirectoryOnly)) {
+                if (-not [string]::IsNullOrWhiteSpace($filePath)) {
+                    return $true
+                }
+            }
+        } catch {
+        }
+    }
+
+    return $false
+}
+
 function Test-HasTemplates {
-    $rankFiles = if (Test-Path $script:RankTemplatesDir) { Get-ChildItem $script:RankTemplatesDir -File | Where-Object { $_.Extension -match '^\.(png|jpg|jpeg|bmp)$' } } else { @() }
-    $suitFiles = if (Test-Path $script:SuitTemplatesDir) { Get-ChildItem $script:SuitTemplatesDir -File | Where-Object { $_.Extension -match '^\.(png|jpg|jpeg|bmp)$' } } else { @() }
-    return ($rankFiles.Count -gt 0 -and $suitFiles.Count -gt 0)
+    return ((Test-DirectoryHasImageFile $script:RankTemplatesDir) -and (Test-DirectoryHasImageFile $script:SuitTemplatesDir))
 }
 
 function Test-NodeInstalled {
@@ -195,16 +433,40 @@ function Test-NodeInstalled {
 }
 
 function Get-NodeCommandPath {
+    if (-not [string]::IsNullOrWhiteSpace($script:UiEnvironmentCache.NodePath) -and (Test-Path $script:UiEnvironmentCache.NodePath)) {
+        return $script:UiEnvironmentCache.NodePath
+    }
+
+    $resolvedPath = $null
     if (Test-Path $script:BundledNodePath) {
-        return $script:BundledNodePath
+        $resolvedPath = $script:BundledNodePath
+    } else {
+        $nodeCommand = Get-Command node -ErrorAction SilentlyContinue
+        if ($null -ne $nodeCommand) {
+            $resolvedPath = $nodeCommand.Source
+        }
     }
 
-    $nodeCommand = Get-Command node -ErrorAction SilentlyContinue
-    if ($null -ne $nodeCommand) {
-        return $nodeCommand.Source
+    $script:UiEnvironmentCache.NodePath = $resolvedPath
+    return $resolvedPath
+}
+
+function Invalidate-UiEnvironmentCache {
+    $script:UiEnvironmentCache.LastRefresh = [DateTime]::MinValue
+}
+
+function Get-UiEnvironmentState([switch]$ForceRefresh) {
+    $now = [DateTime]::UtcNow
+    $cacheIsFresh = ($script:UiEnvironmentCache.LastRefresh -ne [DateTime]::MinValue) -and (($now - $script:UiEnvironmentCache.LastRefresh).TotalMilliseconds -lt $script:UiEnvironmentCacheTtlMs)
+    if (-not $ForceRefresh -and $cacheIsFresh) {
+        return $script:UiEnvironmentCache
     }
 
-    return $null
+    $nodePath = Get-NodeCommandPath
+    $script:UiEnvironmentCache.HasNode = -not [string]::IsNullOrWhiteSpace($nodePath)
+    $script:UiEnvironmentCache.HasTemplates = Test-HasTemplates
+    $script:UiEnvironmentCache.LastRefresh = $now
+    return $script:UiEnvironmentCache
 }
 
 function Join-OutputLines($value) {
@@ -215,6 +477,29 @@ function Join-OutputLines($value) {
         return ($value -join [Environment]::NewLine)
     }
     return [string]$value
+}
+
+function Get-RecognitionCommandTarget([string]$nodeCommand) {
+    try {
+        $serviceState = Ensure-RecognitionService $nodeCommand
+        if ($null -ne $serviceState) {
+            return [PSCustomObject]@{
+                ScriptPath = $script:RecognitionClientScriptPath
+                ExtraArguments = @('--service-state-file', $script:RecognitionServiceStateFilePath)
+                UsesService = $true
+            }
+        }
+    } catch {
+        Write-ProjectLog -level 'WARN' -message '常驻识别服务不可用，回退到直连脚本' -data ([ordered]@{
+            message = $_.Exception.Message
+        })
+    }
+
+    return [PSCustomObject]@{
+        ScriptPath = $script:NodeScriptPath
+        ExtraArguments = @()
+        UsesService = $false
+    }
 }
 
 function Invoke-NodeJsonCommand([string]$nodeCommand, [string]$scriptPath, [string[]]$arguments, [int]$Depth = 32) {
@@ -237,6 +522,17 @@ function Invoke-NodeJsonCommand([string]$nodeCommand, [string]$scriptPath, [stri
     [System.IO.File]::WriteAllText($stdoutPath, $stdoutText, $utf8NoBom)
 
     if ($exitCode -ne 0) {
+        Write-ProjectLog -level 'ERROR' -message 'Node 识别命令失败' -data ([ordered]@{
+            exitCode = $exitCode
+            nodeCommand = $nodeCommand
+            scriptPath = $scriptPath
+            arguments = @($effectiveArguments)
+            stdoutPath = $stdoutPath
+            stderrPath = $stderrPath
+            jsonOutPath = $jsonOutPath
+            stdout = $stdoutText
+            stderr = $stderrText
+        })
         throw ((@($stderrText, $stdoutText) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }) -join [Environment]::NewLine)
     }
 
@@ -248,6 +544,13 @@ function Invoke-NodeJsonCommand([string]$nodeCommand, [string]$scriptPath, [stri
     $jsonText = $jsonText.Trim()
     if ([string]::IsNullOrWhiteSpace($jsonText)) {
         $stderrHint = if (-not [string]::IsNullOrWhiteSpace($stderrText)) { "`n错误日志：$stderrPath" } else { '' }
+        Write-ProjectLog -level 'ERROR' -message '识别器没有返回 JSON' -data ([ordered]@{
+            stdoutPath = $stdoutPath
+            stderrPath = $stderrPath
+            jsonOutPath = $jsonOutPath
+            stdout = $stdoutText
+            stderr = $stderrText
+        })
         throw ("识别器没有返回 JSON。标准输出：$stdoutPath`nJSON 输出：$jsonOutPath" + $stderrHint)
     }
 
@@ -261,6 +564,14 @@ function Invoke-NodeJsonCommand([string]$nodeCommand, [string]$scriptPath, [stri
         return (ConvertFrom-JsonCompat -jsonText $jsonText -Depth $Depth)
     } catch {
         $stderrHint = if (-not [string]::IsNullOrWhiteSpace($stderrText)) { "`n错误日志：$stderrPath" } else { '' }
+        Write-ProjectLog -level 'ERROR' -message '识别器 JSON 解析失败' -data ([ordered]@{
+            stdoutPath = $stdoutPath
+            stderrPath = $stderrPath
+            jsonOutPath = $jsonOutPath
+            jsonSnippet = if ($jsonText.Length -gt 1200) { $jsonText.Substring(0, 1200) } else { $jsonText }
+            stderr = $stderrText
+            parseError = $_.Exception.Message
+        })
         throw ("JSON 解析失败：{0}`n标准输出：{1}`nJSON 输出：{2}{3}" -f $_.Exception.Message, $stdoutPath, $jsonOutPath, $stderrHint)
     }
 }
@@ -430,6 +741,9 @@ function Build-SingleRecognitionLog($entry, [int]$index, [int]$totalCount) {
 
     $recognized = $result.recognized
     $strategy = $result.strategy
+    if ($null -eq $recognized) {
+        return ''
+    }
     $currentCards = if ($null -ne $strategy.inputCards -and @($strategy.inputCards).Count -gt 0) {
         $strategy.inputCards
     } else {
@@ -440,6 +754,12 @@ function Build-SingleRecognitionLog($entry, [int]$index, [int]$totalCount) {
     $headerText = if ($totalCount -gt 1) { '区域 #{0}' -f $index } else { '区域' }
     $lines.Add(('{0}：{1}' -f $headerText, (Format-RegionText $entry.handRegion)))
     $lines.Add(('牌面：{0}' -f (Format-CardListForDisplay $currentCards)))
+
+    $invalidReason = if ($null -ne $strategy -and $null -ne $strategy.hand -and -not [string]::IsNullOrWhiteSpace([string]$strategy.hand.invalidReason)) { [string]$strategy.hand.invalidReason } else { '' }
+    if (-not [string]::IsNullOrWhiteSpace($invalidReason)) {
+        $lines.Add(('策略：识别异常  |  {0}' -f $invalidReason))
+        return ($lines -join [Environment]::NewLine)
+    }
 
     $bestLine = ('最优：保留 {0}' -f (Format-CardListForDisplay $strategy.bestCards))
     $bestLine += ('  |  {0}' -f $strategy.hand.nameZh)
@@ -477,11 +797,20 @@ function Format-StrategySummaryForHistory($payload) {
     }
 
     if ($entries.Count -eq 1) {
-        return (Format-CardListForDisplay $entries[0].result.strategy.bestCards)
+        $strategy = $entries[0].result.strategy
+        if ($null -ne $strategy -and $null -ne $strategy.hand -and -not [string]::IsNullOrWhiteSpace([string]$strategy.hand.invalidReason)) {
+            return ('异常：' + [string]$strategy.hand.invalidReason)
+        }
+        return (Format-CardListForDisplay $strategy.bestCards)
     }
 
     return (($entries | ForEach-Object {
-        '#{0} {1}' -f $_.regionIndex, (Format-CardListForDisplay $_.result.strategy.bestCards)
+        $strategy = $_.result.strategy
+        if ($null -ne $strategy -and $null -ne $strategy.hand -and -not [string]::IsNullOrWhiteSpace([string]$strategy.hand.invalidReason)) {
+            '#{0} {1}' -f $_.regionIndex, ('异常：' + [string]$strategy.hand.invalidReason)
+        } else {
+            '#{0} {1}' -f $_.regionIndex, (Format-CardListForDisplay $strategy.bestCards)
+        }
     }) -join ' | ')
 }
 
@@ -556,6 +885,298 @@ function Set-ResultBoxContent([System.Windows.Forms.RichTextBox]$resultBox, [str
     }
 }
 
+function Format-LogTimestamp([DateTime]$timestamp) {
+    return $timestamp.ToString('HH:mm:ss.fff')
+}
+
+function Build-HistoryLogText {
+    return ''
+}
+
+function Build-VisibleLogText([string]$mainText) {
+    if ([string]::IsNullOrWhiteSpace($mainText)) {
+        return ''
+    }
+
+    return $mainText
+}
+
+function Refresh-VisibleLog([System.Windows.Forms.RichTextBox]$resultBox = $null, [string]$mainText = $null) {
+    if ($PSBoundParameters.ContainsKey('mainText')) {
+        $script:ResultMainText = $mainText
+    }
+
+    $targetResultBox = if ($null -ne $resultBox) { $resultBox } else { $script:ResultLogBox }
+    if ($null -eq $targetResultBox -or $targetResultBox.IsDisposed) {
+        return
+    }
+
+    Set-ResultBoxContent -resultBox $targetResultBox -text (Build-VisibleLogText $script:ResultMainText)
+}
+
+function Set-PayloadUiTiming($payload, $uiTiming) {
+    if ($null -eq $payload -or $null -eq $uiTiming) {
+        return
+    }
+
+    $timingObject = if ($uiTiming -is [PSCustomObject]) { $uiTiming } else { [PSCustomObject]$uiTiming }
+    try {
+        $payload | Add-Member -NotePropertyName uiTiming -NotePropertyValue $timingObject -Force
+    } catch {
+        try {
+            $payload.uiTiming = $timingObject
+        } catch {
+        }
+    }
+}
+
+function Set-PayloadUiTimingField($payload, [string]$name, $value) {
+    if ($null -eq $payload -or [string]::IsNullOrWhiteSpace($name)) {
+        return
+    }
+
+    $timingTable = [ordered]@{}
+    if ($null -ne $payload.uiTiming) {
+        foreach ($property in $payload.uiTiming.PSObject.Properties) {
+            $timingTable[$property.Name] = $property.Value
+        }
+    }
+
+    $timingTable[$name] = $value
+    Set-PayloadUiTiming -payload $payload -uiTiming ([PSCustomObject]$timingTable)
+}
+
+function Get-RecognitionFallbackReasonText($payload) {
+    $reasons = New-Object 'System.Collections.Generic.List[string]'
+    if ($null -ne $payload -and $null -ne $payload.execution -and -not [string]::IsNullOrWhiteSpace([string]$payload.execution.fallbackReason)) {
+        $reasons.Add([string]$payload.execution.fallbackReason)
+    }
+
+    foreach ($entry in (Get-RecognitionEntries $payload)) {
+        if ($null -ne $entry -and $null -ne $entry.result -and $null -ne $entry.result.recognized -and -not [string]::IsNullOrWhiteSpace([string]$entry.result.recognized.fallbackReason)) {
+            $reasons.Add([string]$entry.result.recognized.fallbackReason)
+        }
+    }
+
+    $uniqueReasons = @($reasons | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique)
+    if ($uniqueReasons.Count -le 0) {
+        return ''
+    }
+
+    return ($uniqueReasons -join ' ; ')
+}
+
+function Test-ShouldPreferJavaScriptBackend([string]$reasonText) {
+    if ([string]::IsNullOrWhiteSpace($reasonText)) {
+        return $false
+    }
+
+    return ($reasonText -match 'Python OpenCV' -or $reasonText -match 'opencv-recognize\.py' -or $reasonText -match 'Failed to recognize card')
+}
+
+function Save-RecognitionBackendPreferenceState {
+    try {
+        $statePayload = [ordered]@{
+            backend = $script:RecognitionBackendPreference
+            cooldownUntilUtc = if ($script:RecognitionBackendCooldownUntil -gt [DateTime]::MinValue) { $script:RecognitionBackendCooldownUntil.ToUniversalTime().ToString('o') } else { $null }
+            reason = $script:RecognitionBackendReason
+        } | ConvertTo-Json -Depth 5
+        $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+        Ensure-ParentDirectory $script:RecognitionBackendStatePath
+        [System.IO.File]::WriteAllText($script:RecognitionBackendStatePath, $statePayload, $utf8NoBom)
+    } catch {
+    }
+}
+
+function Load-RecognitionBackendPreferenceState {
+    if (-not (Test-Path $script:RecognitionBackendStatePath)) {
+        return
+    }
+
+    try {
+        $content = Get-Content -LiteralPath $script:RecognitionBackendStatePath -Raw -Encoding UTF8
+        if ([string]::IsNullOrWhiteSpace($content)) {
+            return
+        }
+
+        $state = ConvertFrom-JsonCompat -jsonText $content -Depth 10
+        if ($null -eq $state -or [string]::IsNullOrWhiteSpace([string]$state.backend)) {
+            return
+        }
+
+        if ([string]$state.backend -eq 'javascript' -and -not [string]::IsNullOrWhiteSpace([string]$state.cooldownUntilUtc)) {
+            $cooldownUntil = [DateTime]::Parse([string]$state.cooldownUntilUtc, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind)
+            if ($cooldownUntil.ToUniversalTime() -gt [DateTime]::UtcNow) {
+                $script:RecognitionBackendPreference = 'javascript'
+                $script:RecognitionBackendCooldownUntil = $cooldownUntil.ToUniversalTime()
+                $script:RecognitionBackendReason = [string]$state.reason
+            }
+        }
+    } catch {
+    }
+}
+
+function Enable-JavaScriptBackendCooldown([string]$reasonText) {
+    if (-not (Test-ShouldPreferJavaScriptBackend $reasonText)) {
+        return
+    }
+
+    $isNewActivation = ($script:RecognitionBackendPreference -ne 'javascript' -or [DateTime]::UtcNow -ge $script:RecognitionBackendCooldownUntil)
+    $script:RecognitionBackendPreference = 'javascript'
+    $script:RecognitionBackendCooldownUntil = [DateTime]::UtcNow.AddMilliseconds($script:RecognitionBackendCooldownMs)
+    $script:RecognitionBackendReason = $reasonText
+    Save-RecognitionBackendPreferenceState
+
+    if ($isNewActivation) {
+        $minutes = [int][Math]::Round($script:RecognitionBackendCooldownMs / 60000)
+        Add-History ('OpenCV 后端失败，已切换到 JavaScript 快速模式（{0} 分钟）' -f $minutes)
+        Write-ProjectLog -level 'WARN' -message '识别后端切换为 JavaScript 快速模式' -data ([ordered]@{
+            cooldownMs = $script:RecognitionBackendCooldownMs
+            reason = $reasonText
+        })
+    }
+}
+
+function Get-PreferredRecognitionBackend {
+    if ($script:RecognitionBackendPreference -eq 'javascript') {
+        if ([DateTime]::UtcNow -lt $script:RecognitionBackendCooldownUntil) {
+            return 'javascript'
+        }
+
+        $script:RecognitionBackendPreference = 'auto'
+        $script:RecognitionBackendCooldownUntil = [DateTime]::MinValue
+        $script:RecognitionBackendReason = $null
+        Save-RecognitionBackendPreferenceState
+        Write-ProjectLog -level 'INFO' -message 'JavaScript 快速模式冷却结束，恢复自动后端'
+    }
+
+    return 'auto'
+}
+
+function Update-RecognitionBackendPreferenceFromPayload($payload) {
+    $reasonText = Get-RecognitionFallbackReasonText $payload
+    if (-not [string]::IsNullOrWhiteSpace($reasonText)) {
+        Enable-JavaScriptBackendCooldown $reasonText
+    }
+}
+
+function Update-RecognitionBackendPreferenceFromErrorText([string]$errorText) {
+    if ([string]::IsNullOrWhiteSpace($errorText)) {
+        return
+    }
+
+    Enable-JavaScriptBackendCooldown $errorText
+}
+
+function Capture-ScreenToFile([string]$outputPath) {
+    Ensure-ParentDirectory $outputPath
+    $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+    $bounds = [System.Windows.Forms.SystemInformation]::VirtualScreen
+    $bitmap = $null
+    $graphics = $null
+
+    try {
+        $bitmap = New-Object System.Drawing.Bitmap $bounds.Width, $bounds.Height
+        $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+        $graphics.CopyFromScreen($bounds.Left, $bounds.Top, 0, 0, $bounds.Size)
+        $bitmap.Save($outputPath, [System.Drawing.Imaging.ImageFormat]::Png)
+    } finally {
+        if ($null -ne $graphics) {
+            $graphics.Dispose()
+        }
+        if ($null -ne $bitmap) {
+            $bitmap.Dispose()
+        }
+        $stopwatch.Stop()
+    }
+
+    return [PSCustomObject]@{
+        Path = $outputPath
+        DurationMs = [int][Math]::Round($stopwatch.Elapsed.TotalMilliseconds)
+    }
+}
+
+function Format-UiTimingSummary($uiTiming) {
+    if ($null -eq $uiTiming) {
+        return ''
+    }
+
+    $parts = New-Object 'System.Collections.Generic.List[string]'
+    if (-not [string]::IsNullOrWhiteSpace([string]$uiTiming.startedAtText)) {
+        $parts.Add(('开始 {0}' -f [string]$uiTiming.startedAtText))
+    }
+    if ($null -ne $uiTiming.saveStateMs) {
+        $parts.Add(('存状态 {0} ms' -f [int]$uiTiming.saveStateMs))
+    }
+    if ($null -ne $uiTiming.screenCaptureMs) {
+        $parts.Add(('截图 {0} ms' -f [int]$uiTiming.screenCaptureMs))
+    }
+    if ($null -ne $uiTiming.nodeInvokeMs) {
+        $parts.Add(('Node往返 {0} ms' -f [int]$uiTiming.nodeInvokeMs))
+    }
+    if ($null -ne $uiTiming.processPayloadMs) {
+        $parts.Add(('UI处理 {0} ms' -f [int]$uiTiming.processPayloadMs))
+    }
+    if ($null -ne $uiTiming.totalUiMs) {
+        $parts.Add(('本地总计 {0} ms' -f [int]$uiTiming.totalUiMs))
+    }
+
+    if ($parts.Count -le 0) {
+        return ''
+    }
+
+    return ($parts -join ' | ')
+}
+
+function Write-PayloadExecutionTrace([string]$prefix, $payload) {
+    if ($null -eq $payload) {
+        return
+    }
+
+    $parts = New-Object 'System.Collections.Generic.List[string]'
+    if ($null -ne $payload.execution) {
+        if (-not [string]::IsNullOrWhiteSpace([string]$payload.execution.mode)) {
+            $parts.Add(('执行 {0}' -f [string]$payload.execution.mode))
+        }
+        if ($null -ne $payload.execution.workerCount) {
+            $parts.Add(('worker {0}' -f [int]$payload.execution.workerCount))
+        }
+        if ($null -ne $payload.execution.regionCount) {
+            $parts.Add(('区域 {0}' -f [int]$payload.execution.regionCount))
+        }
+        if ($null -ne $payload.execution.durationMs) {
+            $parts.Add(('后端总计 {0} ms' -f [int]$payload.execution.durationMs))
+        }
+        if ($null -ne $payload.execution.captureDurationMs) {
+            $parts.Add(('后端截图 {0} ms' -f [int]$payload.execution.captureDurationMs))
+        }
+        if ($null -ne $payload.execution.recognitionDurationMs) {
+            $parts.Add(('后端识别 {0} ms' -f [int]$payload.execution.recognitionDurationMs))
+        }
+        if ($null -ne $payload.execution.previewDurationMs -and [int]$payload.execution.previewDurationMs -gt 0) {
+            $parts.Add(('预览 {0} ms' -f [int]$payload.execution.previewDurationMs))
+        }
+        if ($null -ne $payload.execution.acceleration) {
+            $parts.Add(('加速 {0}' -f (ConvertTo-LogDataText $payload.execution.acceleration)))
+        }
+        if (-not [string]::IsNullOrWhiteSpace([string]$payload.execution.fallbackReason)) {
+            $parts.Add(('回退 {0}' -f [string]$payload.execution.fallbackReason))
+        }
+    }
+
+    $timingText = Format-UiTimingSummary $payload.uiTiming
+    if (-not [string]::IsNullOrWhiteSpace($timingText)) {
+        $parts.Add($timingText)
+    }
+
+    if ($parts.Count -gt 0) {
+        Add-History ($prefix + ' | ' + ($parts -join ' | '))
+        return
+    }
+
+    Add-History $prefix
+}
+
 function Format-RegionListItemText([int]$index, $region) {
     return ('#{0}  {1}' -f ($index + 1), (Format-RegionText $region))
 }
@@ -593,20 +1214,37 @@ function Update-RegionManagerState($currentRegion) {
         $selectedIndex = if ($regions.Count -gt 0) { 0 } else { -1 }
     }
 
-    $script:RegionListBox.BeginUpdate()
-    try {
-        $script:RegionListBox.Items.Clear()
-        for ($index = 0; $index -lt $regions.Count; $index += 1) {
-            [void]$script:RegionListBox.Items.Add((Format-RegionListItemText -index $index -region $regions[$index]))
-        }
-    } finally {
-        $script:RegionListBox.EndUpdate()
-    }
-
-    if ($selectedIndex -ge 0 -and $selectedIndex -lt $script:RegionListBox.Items.Count) {
-        $script:RegionListBox.SelectedIndex = $selectedIndex
+    $regionSignature = if ($regions.Count -gt 0) {
+        (($regions | ForEach-Object { '{0},{1},{2},{3}' -f $_.x, $_.y, $_.width, $_.height }) -join ';')
     } else {
-        $script:RegionListBox.ClearSelected()
+        ''
+    }
+    $shouldRebuildItems = ($script:RegionListRenderState.Signature -ne $regionSignature -or $script:RegionListBox.Items.Count -ne $regions.Count)
+    $currentListSelection = if ($script:RegionListBox.SelectedIndex -ge 0) { [int]$script:RegionListBox.SelectedIndex } else { -1 }
+    $shouldUpdateSelection = ($script:RegionListRenderState.SelectedIndex -ne $selectedIndex -or $currentListSelection -ne $selectedIndex)
+
+    if ($shouldRebuildItems -or $shouldUpdateSelection) {
+        $script:RegionListRenderState.Updating = $true
+        $script:RegionListBox.BeginUpdate()
+        try {
+            if ($shouldRebuildItems) {
+                $script:RegionListBox.Items.Clear()
+                for ($index = 0; $index -lt $regions.Count; $index += 1) {
+                    [void]$script:RegionListBox.Items.Add((Format-RegionListItemText -index $index -region $regions[$index]))
+                }
+            }
+            if ($selectedIndex -ge 0 -and $selectedIndex -lt $script:RegionListBox.Items.Count -and $currentListSelection -ne $selectedIndex) {
+                $script:RegionListBox.SelectedIndex = $selectedIndex
+            } elseif ($selectedIndex -lt 0 -and $currentListSelection -ne -1) {
+                $script:RegionListBox.ClearSelected()
+            }
+        } finally {
+            $script:RegionListBox.EndUpdate()
+            $script:RegionListRenderState.Updating = $false
+        }
+
+        $script:RegionListRenderState.Signature = $regionSignature
+        $script:RegionListRenderState.SelectedIndex = $selectedIndex
     }
 
     if ($null -ne $script:RegionSelectionState) {
@@ -620,10 +1258,8 @@ function Update-RegionManagerState($currentRegion) {
     if ($null -ne $script:RegionManagerHintLabel) {
         if ($regions.Count -le 0) {
             $script:RegionManagerHintLabel.Text = '入口：点“加区域”开始，最多 8 个。'
-        } elseif ($selectedIndex -ge 0 -and $selectedIndex -lt $regions.Count) {
-            $script:RegionManagerHintLabel.Text = ('当前选中：#{0} | {1} | 新增沿用#1尺寸，改选中沿用当前尺寸。' -f ($selectedIndex + 1), (Format-RegionText $regions[$selectedIndex]))
         } else {
-            $script:RegionManagerHintLabel.Text = ('已设置 {0} 个区域；继续添加时只需点左上角。' -f $regions.Count)
+            $script:RegionManagerHintLabel.Text = ('已设置 {0} 个区域；新增沿用 #1 尺寸，改位置沿用当前尺寸。' -f $regions.Count)
         }
     }
 
@@ -641,6 +1277,9 @@ function Update-RegionManagerState($currentRegion) {
     }
     if ($null -ne $script:ClearRegionsButton) {
         $script:ClearRegionsButton.Enabled = (-not $isRunning -and $regions.Count -gt 0)
+    }
+    if ($null -ne $script:PreviewRegionsButton) {
+        $script:PreviewRegionsButton.Enabled = (-not $isRunning -and $regions.Count -gt 0)
     }
     if ($null -ne $script:RegionListBox) {
         $script:RegionListBox.Enabled = ($regions.Count -gt 0)
@@ -674,8 +1313,9 @@ function Update-InteractiveState(
     $regionCount = Get-HandRegionCount $currentRegion.Value
     $hasRegion = ($regionCount -gt 0)
     $hasPlayPoint = ($null -ne $currentPlayPoint.Value)
-    $hasNode = Test-NodeInstalled
-    $hasTemplates = Test-HasTemplates
+    $environmentState = Get-UiEnvironmentState
+    $hasNode = $environmentState.HasNode
+    $hasTemplates = $environmentState.HasTemplates
     $isRunning = $script:LoopState.Running
 
     $modeCombo.Enabled = $true
@@ -727,7 +1367,8 @@ function Ensure-NotRunning([string]$actionName) {
 }
 
 function Ensure-CanRecognize($currentRegion) {
-    if (-not (Test-NodeInstalled)) {
+    $environmentState = Get-UiEnvironmentState -ForceRefresh
+    if (-not $environmentState.HasNode) {
         Show-WarningDialog '未检测到可用的 Node 运行时。`n请确认 runtime\node\node.exe 存在，或系统已安装 Node.js。'
         return $false
     }
@@ -778,11 +1419,12 @@ function Format-CandidateLine($candidates) {
 }
 
 function Add-History([string]$message) {
-    $timestamp = Get-Date -Format 'HH:mm:ss'
+    $timestamp = Format-LogTimestamp (Get-Date)
     $script:HistoryLines.Add(('[{0}] {1}' -f $timestamp, $message))
-    while ($script:HistoryLines.Count -gt 8) {
+    while ($script:HistoryLines.Count -gt $script:MaxHistoryLineCount) {
         $script:HistoryLines.RemoveAt(0)
     }
+    Write-ProjectLog -message $message
 }
 
 function Build-HandSignature($payload) {
@@ -891,10 +1533,23 @@ function Apply-LoopIntervalValue([System.Windows.Forms.TextBox]$loopIntervalText
 }
 
 function Prepare-ForScreenPick([System.Windows.Forms.Form]$form, [System.Windows.Forms.Label]$statusLabel, [string]$actionName) {
-    Show-WarningDialog ("请在 2 秒内切回游戏窗口，然后开始{0}。" -f $actionName)
+    Add-History ($actionName + '（Esc 取消）')
     Update-Status $statusLabel ('准备' + $actionName)
     $form.WindowState = [System.Windows.Forms.FormWindowState]::Minimized
-    Start-Sleep -Milliseconds 1800
+    [System.Windows.Forms.Application]::DoEvents()
+    Start-Sleep -Milliseconds 80
+}
+
+function Restore-AfterScreenPick([System.Windows.Forms.Form]$form) {
+    if ($null -eq $form -or $form.IsDisposed) {
+        return
+    }
+
+    if ($form.WindowState -ne [System.Windows.Forms.FormWindowState]::Normal) {
+        $form.WindowState = [System.Windows.Forms.FormWindowState]::Normal
+    }
+    $form.Activate()
+    [System.Windows.Forms.Application]::DoEvents()
 }
 
 function Get-FixedSelectionRectangle([System.Windows.Forms.Form]$selectionForm, $referenceRegion, [System.Drawing.Point]$location) {
@@ -924,6 +1579,7 @@ function Select-ScreenRegion($referenceRegion = $null) {
     $selectionForm.ShowInTaskbar = $false
     $selectionForm.Cursor = [System.Windows.Forms.Cursors]::Cross
     $selectionForm.KeyPreview = $true
+    Enable-DoubleBuffer $selectionForm
     $script:RegionPickReference = Convert-ToRegionObject $referenceRegion
     $script:RegionPickFixedMode = ($null -ne $script:RegionPickReference)
     $script:RegionPickIsDragging = $false
@@ -1038,6 +1694,7 @@ function Select-ScreenPoint {
     $selectionForm.ShowInTaskbar = $false
     $selectionForm.Cursor = [System.Windows.Forms.Cursors]::Cross
     $selectionForm.KeyPreview = $true
+    Enable-DoubleBuffer $selectionForm
     $script:SelectedPoint = $null
 
     $selectionForm.Add_KeyDown({ if ($_.KeyCode -eq [System.Windows.Forms.Keys]::Escape) { $selectionForm.Close() } })
@@ -1050,6 +1707,115 @@ function Select-ScreenPoint {
 
     $selectionForm.ShowDialog() | Out-Null
     return $script:SelectedPoint
+}
+
+function Show-RegionPreviewOverlay($regions, [int]$selectedIndex = -1) {
+    $previewRegions = @(Get-HandRegionList $regions)
+    if ($previewRegions.Count -le 0) {
+        return $false
+    }
+
+    $virtualBounds = [System.Windows.Forms.SystemInformation]::VirtualScreen
+    $overlayForm = New-Object System.Windows.Forms.Form
+    $overlayForm.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::None
+    $overlayForm.StartPosition = [System.Windows.Forms.FormStartPosition]::Manual
+    $overlayForm.Location = New-Object System.Drawing.Point($virtualBounds.X, $virtualBounds.Y)
+    $overlayForm.Size = New-Object System.Drawing.Size($virtualBounds.Width, $virtualBounds.Height)
+    $overlayForm.TopMost = $true
+    $overlayForm.BackColor = [System.Drawing.Color]::Black
+    $overlayForm.Opacity = 0.12
+    $overlayForm.ShowInTaskbar = $false
+    $overlayForm.KeyPreview = $true
+    $overlayForm.Cursor = [System.Windows.Forms.Cursors]::Hand
+    Enable-DoubleBuffer $overlayForm
+
+    $tagFont = Get-UiFont 10 ([System.Drawing.FontStyle]::Bold)
+    $hintFont = Get-UiFont 10
+    $palette = @(
+        [System.Drawing.Color]::FromArgb(255, 0, 200, 255),
+        [System.Drawing.Color]::FromArgb(255, 72, 234, 141),
+        [System.Drawing.Color]::FromArgb(255, 255, 196, 0),
+        [System.Drawing.Color]::FromArgb(255, 255, 120, 120),
+        [System.Drawing.Color]::FromArgb(255, 192, 138, 255),
+        [System.Drawing.Color]::FromArgb(255, 77, 212, 255),
+        [System.Drawing.Color]::FromArgb(255, 255, 149, 0),
+        [System.Drawing.Color]::FromArgb(255, 164, 255, 94)
+    )
+
+    $overlayForm.Add_Shown({
+        $this.Activate()
+        $this.Focus() | Out-Null
+    })
+    $overlayForm.Add_KeyDown({
+        if ($_.KeyCode -eq [System.Windows.Forms.Keys]::Escape -or $_.KeyCode -eq [System.Windows.Forms.Keys]::Enter -or $_.KeyCode -eq [System.Windows.Forms.Keys]::Space) {
+            $this.Close()
+        }
+    })
+    $overlayForm.Add_MouseDown({
+        if ($_.Button -eq [System.Windows.Forms.MouseButtons]::Left -or $_.Button -eq [System.Windows.Forms.MouseButtons]::Right) {
+            $this.Close()
+        }
+    })
+    $overlayForm.Add_Paint({
+        $_.Graphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
+
+        for ($index = 0; $index -lt $previewRegions.Count; $index += 1) {
+            $region = Convert-ToRegionObject $previewRegions[$index]
+            if ($null -eq $region) {
+                continue
+            }
+
+            $rect = New-Object System.Drawing.Rectangle(
+                ([int]$region.x - $virtualBounds.X),
+                ([int]$region.y - $virtualBounds.Y),
+                [Math]::Max(1, [int]$region.width),
+                [Math]::Max(1, [int]$region.height)
+            )
+            $isSelected = ($index -eq $selectedIndex)
+            $borderColor = if ($isSelected) {
+                [System.Drawing.Color]::FromArgb(255, 255, 215, 0)
+            } else {
+                $palette[$index % $palette.Count]
+            }
+            $penWidth = if ($isSelected) { 4 } else { 3 }
+            $labelText = if ($isSelected) { ('#{0} 当前' -f ($index + 1)) } else { ('#{0}' -f ($index + 1)) }
+
+            $pen = New-Object System.Drawing.Pen($borderColor, $penWidth)
+            $badgeBrush = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::FromArgb(235, 18, 18, 18))
+            $textColor = if ($isSelected) { [System.Drawing.Color]::FromArgb(255, 255, 245, 180) } else { [System.Drawing.Color]::White }
+            $labelSize = [System.Windows.Forms.TextRenderer]::MeasureText($labelText, $tagFont)
+            $badgeRect = New-Object System.Drawing.Rectangle(
+                [Math]::Max(8, $rect.X + 6),
+                [Math]::Max(8, $rect.Y + 6),
+                ($labelSize.Width + 12),
+                ([Math]::Max(22, $labelSize.Height + 6))
+            )
+
+            $_.Graphics.DrawRectangle($pen, $rect)
+            $_.Graphics.FillRectangle($badgeBrush, $badgeRect)
+            [System.Windows.Forms.TextRenderer]::DrawText($_.Graphics, $labelText, $tagFont, $badgeRect, $textColor, [System.Windows.Forms.TextFormatFlags]::HorizontalCenter -bor [System.Windows.Forms.TextFormatFlags]::VerticalCenter -bor [System.Windows.Forms.TextFormatFlags]::SingleLine)
+
+            $pen.Dispose()
+            $badgeBrush.Dispose()
+        }
+
+        $hintText = '区域预览：金色为当前选中；按 Esc / Enter / 空格，或点击任意位置关闭'
+        $hintSize = [System.Windows.Forms.TextRenderer]::MeasureText($hintText, $hintFont)
+        $hintRect = New-Object System.Drawing.Rectangle(18, 18, ($hintSize.Width + 24), ([Math]::Max(28, $hintSize.Height + 10)))
+        $hintBackBrush = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::FromArgb(220, 12, 12, 12))
+        $_.Graphics.FillRectangle($hintBackBrush, $hintRect)
+        [System.Windows.Forms.TextRenderer]::DrawText($_.Graphics, $hintText, $hintFont, $hintRect, [System.Drawing.Color]::White, [System.Windows.Forms.TextFormatFlags]::HorizontalCenter -bor [System.Windows.Forms.TextFormatFlags]::VerticalCenter -bor [System.Windows.Forms.TextFormatFlags]::SingleLine)
+        $hintBackBrush.Dispose()
+    })
+
+    try {
+        $overlayForm.ShowDialog() | Out-Null
+        return $true
+    } finally {
+        $overlayForm.Dispose()
+        $tagFont.Dispose()
+        $hintFont.Dispose()
+    }
 }
 
 function Build-RecognitionLog($payload) {
@@ -1103,6 +1869,11 @@ function Invoke-MouseClick($point) {
 }
 
 function Invoke-ClickPlan([System.Windows.Forms.Form]$form, $payload, [System.Windows.Forms.Label]$statusLabel) {
+    if ($null -ne $payload.clickPlan.disabledReason -and -not [string]::IsNullOrWhiteSpace([string]$payload.clickPlan.disabledReason)) {
+        Update-Status $statusLabel '当前牌面无有效策略'
+        return $false
+    }
+
     if ($null -eq $payload.clickPlan.playButtonPoint) {
         Show-ErrorDialog '请先设置出牌点。'
         return $false
@@ -1136,6 +1907,8 @@ function Invoke-ClickPlan([System.Windows.Forms.Form]$form, $payload, [System.Wi
 }
 
 function Get-RecognitionPayload([int]$cardCount, $currentRegion, $currentPlayPoint, [switch]$Quiet) {
+    $operationStartedAt = Get-Date
+    $operationStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
     $nodeCommand = Get-NodeCommandPath
     if ([string]::IsNullOrWhiteSpace($nodeCommand)) {
         if (-not $Quiet) { Show-ErrorDialog '未检测到可用的 Node 运行时。' }
@@ -1147,8 +1920,25 @@ function Get-RecognitionPayload([int]$cardCount, $currentRegion, $currentPlayPoi
     }
 
     $jokerMode = ($null -ne $script:JokerModeCheckBox -and $script:JokerModeCheckBox.Checked)
+    $preferredBackend = Get-PreferredRecognitionBackend
+    $commandTarget = Get-RecognitionCommandTarget $nodeCommand
+    $saveStateStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
     Save-UiState $currentRegion.Value $cardCount $currentPlayPoint.Value $jokerMode $script:LoopIntervalMs
-    return (Invoke-NodeJsonCommand -nodeCommand $nodeCommand -scriptPath $script:NodeScriptPath -arguments @('--region-file', $script:StatePath, '--output', $script:LatestScreenPath, '--card-count', $cardCount, '--allow-jokers', ($(if ($jokerMode) { 'true' } else { 'false' }))) -Depth 50)
+    $saveStateStopwatch.Stop()
+    $captureInfo = Capture-ScreenToFile $script:LatestScreenPath
+    $nodeInvokeStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+    $payload = Invoke-NodeJsonCommand -nodeCommand $nodeCommand -scriptPath $commandTarget.ScriptPath -arguments @($commandTarget.ExtraArguments + @('--region-file', $script:StatePath, '--screenshot', $captureInfo.Path, '--card-count', $cardCount, '--allow-jokers', ($(if ($jokerMode) { 'true' } else { 'false' })), '--generate-previews', 'false', '--recognition-backend', $preferredBackend)) -Depth 50
+    $nodeInvokeStopwatch.Stop()
+    $operationStopwatch.Stop()
+    Set-PayloadUiTiming -payload $payload -uiTiming ([PSCustomObject]@{
+        startedAtText = Format-LogTimestamp $operationStartedAt
+        saveStateMs = [int][Math]::Round($saveStateStopwatch.Elapsed.TotalMilliseconds)
+        screenCaptureMs = [int]$captureInfo.DurationMs
+        nodeInvokeMs = [int][Math]::Round($nodeInvokeStopwatch.Elapsed.TotalMilliseconds)
+        totalUiMs = [int][Math]::Round($operationStopwatch.Elapsed.TotalMilliseconds)
+    })
+    Update-RecognitionBackendPreferenceFromPayload $payload
+    return $payload
 }
 
 function Process-RecognitionPayload([System.Windows.Forms.Form]$form, [System.Windows.Forms.Label]$statusLabel, [System.Windows.Forms.RichTextBox]$resultBox, [System.Windows.Forms.CheckBox]$autoPlayCheckBox, $payload, [bool]$fromLoop) {
@@ -1163,7 +1953,7 @@ function Process-RecognitionPayload([System.Windows.Forms.Form]$form, [System.Wi
 
     $shouldRefreshLog = (-not $fromLoop) -or ($signature -ne $script:LoopState.LastSeenSignature)
     if ($shouldRefreshLog) {
-        Set-ResultBoxContent -resultBox $resultBox -text (Build-RecognitionLog $payload)
+        Refresh-VisibleLog -resultBox $resultBox -mainText (Build-RecognitionLog $payload)
     }
 
     if (-not $fromLoop -and $averageConfidence -lt 0.62) {
@@ -1182,7 +1972,8 @@ function Process-RecognitionPayload([System.Windows.Forms.Form]$form, [System.Wi
         $script:LoopState.LastSeenSignature = $signature
     }
 
-    $shouldAutoPlay = $autoPlayCheckBox.Checked -and ($recognizedRegionCount -eq 1)
+    $hasValidClickPlan = ($null -ne $payload.clickPlan -and @($payload.clickPlan.cardClickPoints).Count -gt 0 -and $null -eq $payload.clickPlan.disabledReason)
+    $shouldAutoPlay = $autoPlayCheckBox.Checked -and ($recognizedRegionCount -eq 1) -and $hasValidClickPlan
     if ($shouldAutoPlay -and $averageConfidence -ge 0.55 -and $signature -ne $script:LoopState.LastActionSignature) {
         $didPlay = Invoke-ClickPlan -form $form -payload $payload -statusLabel $statusLabel
         if ($didPlay) {
@@ -1190,7 +1981,7 @@ function Process-RecognitionPayload([System.Windows.Forms.Form]$form, [System.Wi
             $script:LoopState.CooldownUntil = [DateTime]::UtcNow.AddSeconds(2.8)
             Add-History ('已出牌：保留 {0}' -f (Format-StrategySummaryForHistory $payload))
             if ($shouldRefreshLog) {
-                Set-ResultBoxContent -resultBox $resultBox -text (Build-RecognitionLog $payload)
+                Refresh-VisibleLog -resultBox $resultBox -mainText (Build-RecognitionLog $payload)
             }
             Update-Status $statusLabel '已自动出牌'
             return
@@ -1207,6 +1998,8 @@ function Process-RecognitionPayload([System.Windows.Forms.Form]$form, [System.Wi
 
 function Run-Recognition([System.Windows.Forms.Form]$form, [System.Windows.Forms.Label]$statusLabel, [System.Windows.Forms.RichTextBox]$resultBox, [System.Windows.Forms.ComboBox]$modeCombo, [System.Windows.Forms.CheckBox]$autoPlayCheckBox, $currentRegion, $currentPlayPoint, [switch]$Quiet) {
     $cardCount = Get-SelectedCardCount $modeCombo
+    $regionCount = Get-HandRegionCount $currentRegion.Value
+    $operationStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
     if ($autoPlayCheckBox.Checked -and $null -eq $currentPlayPoint.Value) {
         if (-not $Quiet) {
             Show-ErrorDialog '已勾选自动出牌，但还没有设置出牌点。'
@@ -1217,11 +2010,27 @@ function Run-Recognition([System.Windows.Forms.Form]$form, [System.Windows.Forms
     }
 
     try {
+        Add-History ('手动识别开始：区域 {0} 个 | 模式 {1} 张' -f $regionCount, $cardCount)
         Update-Status $statusLabel '识别中'
         $payload = Get-RecognitionPayload -cardCount $cardCount -currentRegion $currentRegion -currentPlayPoint $currentPlayPoint -Quiet:$Quiet
-        if ($null -eq $payload) { return }
+        if ($null -eq $payload) {
+            Add-History ('手动识别未执行 | {0} ms' -f [int][Math]::Round($operationStopwatch.Elapsed.TotalMilliseconds))
+            return
+        }
+        Write-PayloadExecutionTrace -prefix '手动识别取数完成' -payload $payload
+        $processStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
         Process-RecognitionPayload -form $form -statusLabel $statusLabel -resultBox $resultBox -autoPlayCheckBox $autoPlayCheckBox -payload $payload -fromLoop:$script:LoopState.Running
+        $processStopwatch.Stop()
+        if ($null -ne $payload.uiTiming) {
+            Set-PayloadUiTimingField -payload $payload -name 'processPayloadMs' -value ([int][Math]::Round($processStopwatch.Elapsed.TotalMilliseconds))
+            Set-PayloadUiTimingField -payload $payload -name 'totalUiMs' -value ([int][Math]::Round($operationStopwatch.Elapsed.TotalMilliseconds))
+            Refresh-VisibleLog -resultBox $resultBox -mainText (Build-RecognitionLog $payload)
+        }
+        Write-PayloadExecutionTrace -prefix '手动识别完成' -payload $payload
     } catch {
+        Add-History ('手动识别失败 | {0} ms | {1}' -f [int][Math]::Round($operationStopwatch.Elapsed.TotalMilliseconds), $_.Exception.Message)
+        Update-RecognitionBackendPreferenceFromErrorText $_.Exception.Message
+        Write-ProjectLog -level 'ERROR' -message '手动识别异常' -data (Get-ErrorRecordLogData $_)
         Update-Status $statusLabel '识别失败'
         if (-not $Quiet) {
             Show-ErrorDialog ("识别失败：`n" + $_.Exception.Message)
@@ -1249,7 +2058,14 @@ function Start-LoopRecognitionAsync([System.Windows.Forms.Form]$form, [System.Wi
 
     $cardCount = Get-SelectedCardCount $modeCombo
     $jokerMode = ($null -ne $script:JokerModeCheckBox -and $script:JokerModeCheckBox.Checked)
+    $preferredBackend = Get-PreferredRecognitionBackend
+    $commandTarget = Get-RecognitionCommandTarget $nodeCommand
+    $startedAt = Get-Date
+    $loopPerfStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+    $saveStateStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
     Save-UiState $currentRegion.Value $cardCount $currentPlayPoint.Value $jokerMode $script:LoopIntervalMs
+    $saveStateStopwatch.Stop()
+    $captureInfo = Capture-ScreenToFile $script:LatestScreenPath
 
     $stdoutPath = Join-Path $script:ProjectRoot 'screen-recognition\last-loop-node-stdout.json'
     $stderrPath = Join-Path $script:ProjectRoot 'screen-recognition\last-loop-node-stderr.log'
@@ -1258,12 +2074,13 @@ function Start-LoopRecognitionAsync([System.Windows.Forms.Form]$form, [System.Wi
     if (Test-Path $stderrPath) { Remove-Item $stderrPath -Force -ErrorAction SilentlyContinue }
     if (Test-Path $jsonOutPath) { Remove-Item $jsonOutPath -Force -ErrorAction SilentlyContinue }
 
-    $argumentList = @(
-        $script:NodeScriptPath,
+    $argumentList = @($commandTarget.ScriptPath) + @($commandTarget.ExtraArguments) + @(
         '--region-file', $script:StatePath,
-        '--output', $script:LatestScreenPath,
+        '--screenshot', $captureInfo.Path,
         '--card-count', [string]$cardCount,
         '--allow-jokers', ($(if ($jokerMode) { 'true' } else { 'false' })),
+        '--generate-previews', 'false',
+        '--recognition-backend', $preferredBackend,
         '--silent', 'true',
         '--json-out', $jsonOutPath
     )
@@ -1285,12 +2102,18 @@ function Start-LoopRecognitionAsync([System.Windows.Forms.Form]$form, [System.Wi
 
     $script:LoopState.Busy = $true
     Update-Status $statusLabel '挂机识别中'
+    Add-History ('挂机识别启动：区域 {0} 个 | 存状态 {1} ms' -f (Get-HandRegionCount $currentRegion.Value), [int][Math]::Round($saveStateStopwatch.Elapsed.TotalMilliseconds))
     $script:LoopState.ActiveRecognition = [PSCustomObject]@{
         Process = $process
         StdoutPath = $stdoutPath
         StderrPath = $stderrPath
         JsonOutPath = $jsonOutPath
         Depth = 50
+        StartedAtText = Format-LogTimestamp $startedAt
+        StartedStopwatch = $loopPerfStopwatch
+        SaveStateMs = [int][Math]::Round($saveStateStopwatch.Elapsed.TotalMilliseconds)
+        ScreenCaptureMs = [int]$captureInfo.DurationMs
+        RecognitionBackend = $preferredBackend
     }
 }
 
@@ -1323,6 +2146,15 @@ function Complete-LoopRecognitionAsync([System.Windows.Forms.Form]$form, [System
                 Update-Status $statusLabel '挂机识别失败'
                 Add-History ('挂机异常：' + ((@($stderrText, $stdoutText) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }) -join ' '))
             }
+            Update-RecognitionBackendPreferenceFromErrorText ((@($stderrText, $stdoutText) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }) -join ' ')
+            Write-ProjectLog -level 'ERROR' -message '挂机识别进程退出异常' -data ([ordered]@{
+                exitCode = $process.ExitCode
+                stdoutPath = $activeRecognition.StdoutPath
+                stderrPath = $activeRecognition.StderrPath
+                jsonOutPath = $activeRecognition.JsonOutPath
+                stdout = $stdoutText
+                stderr = $stderrText
+            })
             return
         }
 
@@ -1332,10 +2164,36 @@ function Complete-LoopRecognitionAsync([System.Windows.Forms.Form]$form, [System
             $stdoutText
         }
         $payload = Convert-NodeJsonTextToObject -jsonText $jsonText -stdoutPath $activeRecognition.StdoutPath -jsonOutPath $activeRecognition.JsonOutPath -stderrText $stderrText -Depth $activeRecognition.Depth
+        $nodeInvokeMs = if ($null -ne $activeRecognition.StartedStopwatch) { [int][Math]::Round($activeRecognition.StartedStopwatch.Elapsed.TotalMilliseconds) } else { $null }
+        Set-PayloadUiTiming -payload $payload -uiTiming ([PSCustomObject]@{
+            startedAtText = $activeRecognition.StartedAtText
+            saveStateMs = $activeRecognition.SaveStateMs
+            screenCaptureMs = $activeRecognition.ScreenCaptureMs
+            nodeInvokeMs = $nodeInvokeMs
+        })
+        Update-RecognitionBackendPreferenceFromPayload $payload
         if (-not $form.IsDisposed) {
+            $processStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
             Process-RecognitionPayload -form $form -statusLabel $statusLabel -resultBox $resultBox -autoPlayCheckBox $autoPlayCheckBox -payload $payload -fromLoop:$true
+            $processStopwatch.Stop()
+            if ($null -ne $payload.uiTiming) {
+                Set-PayloadUiTimingField -payload $payload -name 'processPayloadMs' -value ([int][Math]::Round($processStopwatch.Elapsed.TotalMilliseconds))
+                Set-PayloadUiTimingField -payload $payload -name 'totalUiMs' -value ($(if ($null -ne $activeRecognition.StartedStopwatch) { [int][Math]::Round($activeRecognition.StartedStopwatch.Elapsed.TotalMilliseconds) } else { $null }))
+                Refresh-VisibleLog -resultBox $resultBox -mainText (Build-RecognitionLog $payload)
+            }
+            Write-PayloadExecutionTrace -prefix '挂机识别完成' -payload $payload
         }
+    } catch {
+        if ($script:LoopState.Running -and -not $script:LoopState.StopRequested) {
+            Update-Status $statusLabel '挂机识别失败'
+            Add-History ('挂机识别失败 | ' + $_.Exception.Message)
+        }
+        Update-RecognitionBackendPreferenceFromErrorText $_.Exception.Message
+        Write-ProjectLog -level 'ERROR' -message '挂机识别异常' -data (Get-ErrorRecordLogData $_)
     } finally {
+        if ($null -ne $activeRecognition.StartedStopwatch) {
+            $activeRecognition.StartedStopwatch.Stop()
+        }
         $process.Dispose()
         $script:LoopState.ActiveRecognition = $null
         $script:LoopState.Busy = $false
@@ -1352,6 +2210,8 @@ $form.ShowInTaskbar = $true
 $form.BackColor = [System.Drawing.Color]::FromArgb(245, 248, 252)
 $form.ClientSize = New-Object System.Drawing.Size(760, 398)
 $form.Font = Get-UiFont 9
+$form.SuspendLayout()
+Enable-DoubleBuffer $form
 
 $workingArea = [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea
 $form.StartPosition = [System.Windows.Forms.FormStartPosition]::Manual
@@ -1456,6 +2316,8 @@ $regionGroupBox = New-Object System.Windows.Forms.GroupBox
 $regionGroupBox.Text = '区域入口（0/8）'
 $regionGroupBox.Size = New-Object System.Drawing.Size(308, 350)
 $regionGroupBox.Location = New-Object System.Drawing.Point(440, 12)
+$regionGroupBox.SuspendLayout()
+Enable-DoubleBuffer $regionGroupBox
 $form.Controls.Add($regionGroupBox)
 $script:RegionGroupBox = $regionGroupBox
 
@@ -1465,6 +2327,7 @@ $regionListBox.Location = New-Object System.Drawing.Point(10, 22)
 $regionListBox.HorizontalScrollbar = $true
 $regionListBox.IntegralHeight = $false
 $regionListBox.Font = Get-UiFont 8.5
+Enable-DoubleBuffer $regionListBox
 $regionGroupBox.Controls.Add($regionListBox)
 $script:RegionListBox = $regionListBox
 
@@ -1492,11 +2355,18 @@ $clearRegionsButton.Location = New-Object System.Drawing.Point(226, 250)
 $regionGroupBox.Controls.Add($clearRegionsButton)
 $script:ClearRegionsButton = $clearRegionsButton
 
+$previewRegionsButton = New-Object System.Windows.Forms.Button
+$previewRegionsButton.Text = '预览区域'
+$previewRegionsButton.Size = New-Object System.Drawing.Size(288, 28)
+$previewRegionsButton.Location = New-Object System.Drawing.Point(10, 282)
+$regionGroupBox.Controls.Add($previewRegionsButton)
+$script:PreviewRegionsButton = $previewRegionsButton
+
 $regionManagerHintLabel = New-Object System.Windows.Forms.Label
 $regionManagerHintLabel.Text = '入口：点“加区域”开始，最多 8 个。'
 $regionManagerHintLabel.AutoSize = $false
-$regionManagerHintLabel.Size = New-Object System.Drawing.Size(288, 58)
-$regionManagerHintLabel.Location = New-Object System.Drawing.Point(10, 286)
+$regionManagerHintLabel.Size = New-Object System.Drawing.Size(288, 28)
+$regionManagerHintLabel.Location = New-Object System.Drawing.Point(10, 316)
 $regionManagerHintLabel.ForeColor = [System.Drawing.Color]::FromArgb(90, 90, 90)
 $regionGroupBox.Controls.Add($regionManagerHintLabel)
 $script:RegionManagerHintLabel = $regionManagerHintLabel
@@ -1515,7 +2385,9 @@ $resultBox.Location = New-Object System.Drawing.Point(12, 154)
 $resultBox.BackColor = [System.Drawing.Color]::White
 $resultBox.ForeColor = [System.Drawing.Color]::Black
 $resultBox.Font = Get-UiFont 9
+Enable-DoubleBuffer $resultBox
 $form.Controls.Add($resultBox)
+$script:ResultLogBox = $resultBox
 
 $footLabel = New-Object System.Windows.Forms.Label
 $footLabel.Text = '连续模式：牌变了才再次出牌。'
@@ -1556,6 +2428,21 @@ if ($null -ne $savedState) {
 }
 
 $loopIntervalTextBox.Text = [string]$script:LoopIntervalMs
+Invalidate-UiEnvironmentCache
+Load-RecognitionBackendPreferenceState
+
+$regionGroupBox.ResumeLayout($false)
+$regionGroupBox.PerformLayout()
+$form.ResumeLayout($false)
+$form.PerformLayout()
+Refresh-VisibleLog -resultBox $resultBox
+Write-ProjectLog -level 'INFO' -message '桌面助手启动' -data ([ordered]@{
+    scriptPath = $MyInvocation.MyCommand.Path
+    statePath = $script:StatePath
+    logPath = (Get-ProjectLogPath)
+    backendPreference = $script:RecognitionBackendPreference
+    backendCooldownUntilUtc = if ($script:RecognitionBackendCooldownUntil -gt [DateTime]::MinValue) { $script:RecognitionBackendCooldownUntil.ToUniversalTime().ToString('o') } else { $null }
+})
 
 Update-InteractiveState -modeCombo $modeCombo -autoPlayCheckBox $autoPlayCheckBox -loopToggle $loopToggle -selectButton $selectButton -playPointButton $playPointButton -recognizeButton $recognizeButton -openTemplatesButton $openTemplatesButton -footLabel $footLabel -currentRegion $currentRegion -currentPlayPoint $currentPlayPoint
 
@@ -1625,6 +2512,10 @@ $autoPlayCheckBox.Add_Click({
 })
 
 $regionListBox.Add_SelectedIndexChanged({
+    if ($script:RegionListRenderState.Updating) {
+        return
+    }
+
     if ($regionListBox.SelectedIndex -ge 0) {
         $script:RegionSelectionState.Value = [int]$regionListBox.SelectedIndex
     } else {
@@ -1652,8 +2543,7 @@ $selectButton.Add_Click({
     }
     Prepare-ForScreenPick -form $form -statusLabel $statusLabel -actionName $actionName
     $region = Select-ScreenRegion $referenceRegion
-    $form.WindowState = [System.Windows.Forms.FormWindowState]::Normal
-    $form.Activate()
+    Restore-AfterScreenPick $form
     if ($null -ne $region) {
         $currentRegion.Value = @($existingRegions + @($region))
         $script:RegionSelectionState.Value = $currentRegion.Value.Count - 1
@@ -1686,8 +2576,7 @@ $replaceRegionButton.Add_Click({
     }
     Prepare-ForScreenPick -form $form -statusLabel $statusLabel -actionName $actionName
     $region = Select-ScreenRegion $referenceRegion
-    $form.WindowState = [System.Windows.Forms.FormWindowState]::Normal
-    $form.Activate()
+    Restore-AfterScreenPick $form
     if ($null -ne $region) {
         $regions[$selectedIndex] = $region
         $currentRegion.Value = @($regions)
@@ -1752,6 +2641,36 @@ $clearRegionsButton.Add_Click({
     Update-InteractiveState -modeCombo $modeCombo -autoPlayCheckBox $autoPlayCheckBox -loopToggle $loopToggle -selectButton $selectButton -playPointButton $playPointButton -recognizeButton $recognizeButton -openTemplatesButton $openTemplatesButton -footLabel $footLabel -currentRegion $currentRegion -currentPlayPoint $currentPlayPoint
 })
 
+$previewRegionsButton.Add_Click({
+    if (-not (Ensure-NotRunning '预览区域')) {
+        return
+    }
+
+    $regions = @(Get-HandRegionList $currentRegion.Value)
+    if ($regions.Count -le 0) {
+        Show-WarningDialog '请先添加区域，再预览。'
+        return
+    }
+
+    $selectedIndex = if ($null -ne $script:RegionSelectionState) { [int]$script:RegionSelectionState.Value } else { -1 }
+    if ($selectedIndex -lt 0 -or $selectedIndex -ge $regions.Count) {
+        $selectedIndex = -1
+    }
+
+    Add-History ('区域预览：显示 {0} 个区域' -f $regions.Count)
+    Write-ProjectLog -level 'INFO' -message '区域预览打开' -data ([ordered]@{
+        regionCount = $regions.Count
+        selectedIndex = $selectedIndex
+    })
+    Prepare-ForScreenPick -form $form -statusLabel $statusLabel -actionName '预览区域'
+    try {
+        [void](Show-RegionPreviewOverlay -regions $regions -selectedIndex $selectedIndex)
+    } finally {
+        Restore-AfterScreenPick $form
+    }
+    Update-Status $statusLabel ('已预览 {0} 个区域' -f $regions.Count)
+})
+
 $playPointButton.Add_Click({
     if (-not (Ensure-NotRunning '设置出牌点')) {
         return
@@ -1759,8 +2678,7 @@ $playPointButton.Add_Click({
 
     Prepare-ForScreenPick -form $form -statusLabel $statusLabel -actionName '设置出牌点'
     $point = Select-ScreenPoint
-    $form.WindowState = [System.Windows.Forms.FormWindowState]::Normal
-    $form.Activate()
+    Restore-AfterScreenPick $form
     if ($null -ne $point) {
         $currentPlayPoint.Value = $point
         Save-UiState $currentRegion.Value (Get-SelectedCardCount $modeCombo) $currentPlayPoint.Value $jokerModeCheckBox.Checked $script:LoopIntervalMs
@@ -1835,7 +2753,7 @@ $openTemplatesButton.Add_Click({
     $templatesRoot = Join-Path $script:ProjectRoot 'screen-recognition\templates'
     Ensure-ParentDirectory (Join-Path $templatesRoot 'placeholder.txt')
     Start-Process explorer.exe $templatesRoot
-    Start-Sleep -Milliseconds 100
+    Invalidate-UiEnvironmentCache
     Update-InteractiveState -modeCombo $modeCombo -autoPlayCheckBox $autoPlayCheckBox -loopToggle $loopToggle -selectButton $selectButton -playPointButton $playPointButton -recognizeButton $recognizeButton -openTemplatesButton $openTemplatesButton -footLabel $footLabel -currentRegion $currentRegion -currentPlayPoint $currentPlayPoint
 })
 

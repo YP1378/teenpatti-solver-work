@@ -516,9 +516,54 @@ function buildBestThreeStrategyFromCards(normalizedCards, options) {
     };
 }
 
+function buildInvalidStrategyFromCards(playerCards, reason, options) {
+    var normalizedCards = Array.isArray(playerCards)
+        ? playerCards.map(function (card) {
+            try {
+                return normalizeCardCode(card);
+            } catch (error) {
+                return String(card || "");
+            }
+        })
+        : [];
+    var indexBase = resolveIndexBase(options);
+
+    return {
+        mode: normalizedCards.length + "_choose_3",
+        inputCards: normalizedCards.slice(),
+        bestCards: [],
+        bestResolvedCards: [],
+        bestCardIndexes: [],
+        discardCards: normalizedCards.slice(),
+        discardIndexes: normalizedCards.map(function (_card, index) {
+            return index + indexBase;
+        }),
+        jokerModeEnabled: isJokerModeEnabled(options),
+        valid: false,
+        hand: {
+            name: "invalid-recognition",
+            nameZh: "识别异常",
+            desc: reason,
+            descZh: reason,
+            score: -1,
+            resolvedCards: [],
+            invalidReason: reason,
+            jokerCount: 0
+        }
+    };
+}
+
 function getBestStrategyForCards(playerCards, options) {
     var normalizedCards = normalizePlayerCards(playerCards, undefined, options);
     return buildBestThreeStrategyFromCards(normalizedCards, options);
+}
+
+function tryGetBestStrategyForCards(playerCards, options) {
+    try {
+        return getBestStrategyForCards(playerCards, options);
+    } catch (error) {
+        return buildInvalidStrategyFromCards(playerCards, String(error && error.message ? error.message : error), options);
+    }
 }
 
 function getBestStrategyForFourCards(playerCards, options) {
@@ -688,7 +733,7 @@ async function recognizeAndSolveHandRegionFromImage(handRegion, screenshotPath, 
 
     return {
         recognized: recognitionResult,
-        strategy: getBestStrategyForCards(recognitionResult.cardCodes, strategyOptions)
+        strategy: tryGetBestStrategyForCards(recognitionResult.cardCodes, strategyOptions)
     };
 }
 
@@ -711,7 +756,7 @@ async function recognizeAndSolveHandRegionsFromImage(handRegions, screenshotPath
     return recognitionResults.map(function (recognitionResult) {
         return {
             recognized: recognitionResult,
-            strategy: getBestStrategyForCards(recognitionResult.cardCodes, strategyOptions)
+            strategy: tryGetBestStrategyForCards(recognitionResult.cardCodes, strategyOptions)
         };
     });
 }
@@ -730,7 +775,7 @@ async function recognizeAndSolveHandRegionFromScreen(handRegion, options) {
 
     return {
         recognized: recognitionResult,
-        strategy: getBestStrategyForCards(recognitionResult.cardCodes, strategyOptions)
+        strategy: tryGetBestStrategyForCards(recognitionResult.cardCodes, strategyOptions)
     };
 }
 

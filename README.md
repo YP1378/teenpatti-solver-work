@@ -81,9 +81,12 @@
 - 多区域模式下，至少支持重复框选追加区域、重选全部区域，以及在日志窗口中逐区域展示识别结果。
 - 多区域模式下，识别执行模型应是“最多 8 个并发 worker / 线程”，而不是串行逐个识别。
 - UI 必须提供明确的多区域入口，至少包含：区域列表、添加区域、替换选中区域、删除选中区域、清空区域。
+- UI 必须提供“一键预览全部已保存区域”的入口，并在屏幕上以边框覆盖层显示所有区域；当前选中区域需要有额外高亮，便于确认框选位置。
 - 第 1 个区域必须支持正常拖框；第 2 个及后续区域默认沿用第 1 个区域尺寸，只需点击目标区域左上角即可保存。
 - 点击“连续挂机 / 自动挂机”后，应立即对当前全部已保存区域一起开始识别，并把多区域结果继续汇总到现有日志窗口。
 - 日志窗口应显示多区域执行摘要，至少包含：区域数、并发线程数、执行路径、总耗时，以及当前可见的 OpenCL / CUDA / CPU 线程信息。
+- 当前日志窗口必须同时承载“时间日志 + 识别结果”，不再额外拆出单独日志面板。
+- 时间日志至少精确到毫秒，并记录识别开始时间、存状态耗时、Node 往返耗时、UI 结果处理耗时、本地总耗时，便于后续定位卡顿点。
 
 ### R-006 便携运行
 - 项目支持打包为便携版本。
@@ -113,6 +116,7 @@
 - `app/screen-recognition/index.js` 和 `app/screen-recognition/opencv-recognize.py` 内的模板/特征应允许进程内缓存，避免多区域和连续挂机时重复预处理。
 - 多区域下的策略求解应复用单次识别结果，不允许在 UI 桥接层对同一批牌再次做重复求解。
 - 若目标机器存在 NVIDIA GPU，优先先探测并显示 CUDA 状态；只有在 OpenCV 确认为 CUDA 编译版且收益明确时，才继续推进真正的 CUDA 图像计算改写。
+- 做任何强优化前，先以日志时间线确认瓶颈到底落在框选交互、状态保存、Node 往返、识别处理还是 UI 渲染，避免盲目重写。
 
 ### R-011 Random.org 标准素材兼容
 - 支持导入 `https://www.random.org/playing-cards/` 当前使用的标准扑克牌素材，作为一套可重复生成的基准模板。
@@ -212,6 +216,8 @@
 - `app/屏幕识牌助手.ps1`
   - 中文入口镜像脚本
   - 与上面脚本必须保持同步
+- 与时间日志/性能定位直接相关的关键函数：`Add-History`、`Refresh-VisibleLog`、`Build-RecognitionLog`、`Get-RecognitionPayload`、`Run-Recognition`、`Start-LoopRecognitionAsync`、`Complete-LoopRecognitionAsync`
+- 与区域框选/预览直接相关的关键函数：`Select-ScreenRegion`、`Show-RegionPreviewOverlay`、`Update-RegionManagerState`
 
 ### 8. 启动与打包
 - `启动屏幕识牌助手.vbs`
@@ -233,6 +239,9 @@
 - `app/screen-recognition/debug-*.png` / `app/screen-recognition/last-*.json` / `app/screen-recognition/_last-ui-output.json`
   - 调试产物与最近一次运行输出
   - 可以归档搬走，不属于核心源码
+- `app/screen-recognition/logs/`
+  - 项目内运行日志目录
+  - 当前 UI/服务性能排查优先看这里，不再依赖窗口内日志排查卡顿
 - `app/dist/`
   - 便携版构建产物
   - 不是开发入口，可以整体搬走，需要时重新打包生成
@@ -246,6 +255,7 @@
 - **改多区域批量识别 / 缓存策略 / 后端调度** → `app/screen-recognition/index.js`、`app/screen-recognition/ui-recognize.js`
 - **改 Python/OpenCV 批处理 / 模板缓存 / 掩码匹配** → `app/screen-recognition/opencv-recognize.py`
 - **改挂机间隔输入框/UI 按钮布局** → `app/screen-card-helper.ps1` 和 `app/屏幕识牌助手.ps1`
+- **改区域预览覆盖层/区域入口按钮** → `app/screen-card-helper.ps1` 和 `app/屏幕识牌助手.ps1`
 - **导入 random.org 标准牌面并生成模板** → `app/tools/import-random-org-playing-cards.js`
 - **按当前已框选区域自动二次截图** → `app/screen-recognition/capture-hand-region-sample.js`
 - **导入横向多牌素材图** → `app/screen-recognition/import-strip-templates.py`
@@ -341,6 +351,10 @@
 - 本项目已实测：在当前 PowerShell + WinForms 选框弹层里，把 `MouseDown/MouseMove/MouseUp/Shown` 这类事件处理器包成 `.GetNewClosure()` 会出现事件不触发，直接导致“点了加区域但无法框选”。
 - 区域框选与点位拾取这类交互，统一直接使用 WinForms 事件里的 `$this` / `$_`，并用 `DialogResult` 明确区分“成功选择”和“取消选择”。
 - 修这条链路时，必须同时验证三件事：第 1 个区域能拖框、第 2 个区域能按同尺寸定位、保存后 UI 计数会立即从 `0/8` 变成 `1/8`。
+### H-017 日志窗口已经是“时间日志 + 识别结果”的组合视图
+- 当前 `resultBox` 不再只显示识别结果，而是先显示时间日志，再显示识别结果；后续如果直接 `Set-ResultBoxContent` 覆盖文本，会把时间线冲掉。
+- 修改桌面助手日志展示时，优先走 `Refresh-VisibleLog`，并同步维护 `script:ResultMainText`，否则很容易出现“日志有了但结果没了”或“结果更新后日志消失”。
+- 如果后续怀疑日志刷新本身带来卡顿，先评估 `Add-History -> Refresh-VisibleLog` 这条链路的重绘成本，再决定是否改成关键阶段再刷新，而不是直接回退掉时间日志。
 
 ---
 

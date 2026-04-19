@@ -123,19 +123,64 @@ function getPreviewOutputPath(projectRoot, regionIndex) {
     return path.resolve(projectRoot, `./screen-recognition/latest-hand-region-${regionIndex + 1}.png`);
 }
 
-function createRecognitionOptions(projectRoot, cardCount, allowJokers) {
-    return {
+function createRecognitionOptions(projectRoot, cardCount, allowJokers, recognitionBackend) {
+    const options = {
         baseDir: projectRoot,
         templateRoot: "./screen-recognition/templates",
         cardCount: cardCount,
         allowJokers: allowJokers,
         indexBase: 0
     };
+
+    if (recognitionBackend) {
+        options.recognitionBackend = recognitionBackend;
+    }
+
+    return options;
+}
+
+function collectResultFallbackReasons(results) {
+    return Array.from(new Set((Array.isArray(results) ? results : []).map(function (entry) {
+        return entry
+            && entry.result
+            && entry.result.recognized
+            && entry.result.recognized.fallbackReason
+            ? String(entry.result.recognized.fallbackReason)
+            : null;
+    }).filter(Boolean)));
+}
+
+function mergeFallbackReasons() {
+    return Array.from(new Set(Array.prototype.slice.call(arguments).reduce(function (allItems, currentItem) {
+        if (!currentItem) {
+            return allItems;
+        }
+
+        if (Array.isArray(currentItem)) {
+            return allItems.concat(currentItem.filter(Boolean));
+        }
+
+        allItems.push(String(currentItem));
+        return allItems;
+    }, []).filter(Boolean))).join("; ") || null;
+}
+
+async function resolveScreenshotPath(projectRoot, explicitScreenshotPath, outputPath) {
+    if (explicitScreenshotPath) {
+        return path.resolve(projectRoot, explicitScreenshotPath);
+    }
+
+    return solver.capturePrimaryScreen(outputPath);
 }
 
 function buildClickPlan(state, handRegion, result) {
+    const strategy = result && result.strategy ? result.strategy : null;
+    const strategyInvalidReason = strategy && strategy.hand ? strategy.hand.invalidReason : null;
+    const bestIndexes = strategy && Array.isArray(strategy.bestCardIndexes) ? strategy.bestCardIndexes : [];
+    const hasValidStrategy = !strategyInvalidReason && bestIndexes.length > 0;
+
     return {
-        cardClickPoints: (result.strategy.bestCardIndexes || []).map(function (zeroBasedIndex) {
+        cardClickPoints: hasValidStrategy ? bestIndexes.map(function (zeroBasedIndex) {
             const recognizedCard = Array.isArray(result.recognized.cards) ? result.recognized.cards[zeroBasedIndex] : null;
             const region = recognizedCard && recognizedCard.cardRegion ? recognizedCard.cardRegion : handRegion;
             return {
@@ -145,8 +190,9 @@ function buildClickPlan(state, handRegion, result) {
                 y: Math.round(region.y + (region.height / 2)),
                 code: result.recognized.cardCodes[zeroBasedIndex]
             };
-        }),
-        playButtonPoint: state.playButtonPoint || null
+        }) : [],
+        playButtonPoint: hasValidStrategy ? (state.playButtonPoint || null) : null,
+        disabledReason: hasValidStrategy ? null : (strategyInvalidReason || "No valid strategy available.")
     };
 }
 
@@ -164,12 +210,12 @@ function buildRecognitionEntryFromSolvedResult(state, handRegion, regionIndex, r
     };
 }
 
-async function buildRecognitionEntry(projectRoot, state, screenshotPath, handRegion, regionIndex, cardCount, allowJokers) {
+async function buildRecognitionEntry(projectRoot, state, screenshotPath, handRegion, regionIndex, cardCount, allowJokers, recognitionBackend) {
     const startedAt = Date.now();
     const result = await solver.recognizeAndSolveHandRegionFromImage(
         handRegion,
         screenshotPath,
-        createRecognitionOptions(projectRoot, cardCount, allowJokers)
+        createRecognitionOptions(projectRoot, cardCount, allowJokers, recognitionBackend)
     );
     return buildRecognitionEntryFromSolvedResult(state, handRegion, regionIndex, result, Date.now() - startedAt);
 }
@@ -198,7 +244,7 @@ function serializeError(error) {
     };
 }
 
-function createJobPayload(projectRoot, state, screenshotPath, handRegion, regionIndex, cardCount, allowJokers) {
+function createJobPayload(projectRoot, state, screenshotPath, handRegion, regionIndex, cardCount, allowJokers, recognitionBackend) {
     return {
         projectRoot: projectRoot,
         state: state,
@@ -206,7 +252,8 @@ function createJobPayload(projectRoot, state, screenshotPath, handRegion, region
         handRegion: handRegion,
         regionIndex: regionIndex,
         cardCount: cardCount,
-        allowJokers: allowJokers
+        allowJokers: allowJokers,
+        recognitionBackend: recognitionBackend
     };
 }
 
@@ -267,10 +314,10 @@ function runWorkerRecognition(workerPayload) {
     });
 }
 
-async function buildRecognitionEntriesSequential(projectRoot, state, screenshotPath, handRegions, cardCount, allowJokers) {
+async function buildRecognitionEntriesSequential(projectRoot, state, screenshotPath, handRegions, cardCount, allowJokers, recognitionBackend) {
     const entries = [];
     for (let index = 0; index < handRegions.length; index += 1) {
-        entries.push(await buildRecognitionEntry(projectRoot, state, screenshotPath, handRegions[index], index, cardCount, allowJokers));
+        entries.push(await buildRecognitionEntry(projectRoot, state, screenshotPath, handRegions[index], index, cardCount, allowJokers, recognitionBackend));
     }
 
     return {
@@ -281,7 +328,7 @@ async function buildRecognitionEntriesSequential(projectRoot, state, screenshotP
     };
 }
 
-async function buildRecognitionEntriesViaBatch(projectRoot, state, screenshotPath, handRegions, cardCount, allowJokers) {
+async function buildRecognitionEntriesViaBatch(projectRoot, state, screenshotPath, handRegions, cardCount, allowJokers, recognitionBackend) {
     if (typeof solver.recognizeAndSolveHandRegionsFromImage !== "function") {
         throw new Error("Batch recognition API is unavailable.");
     }
@@ -290,7 +337,7 @@ async function buildRecognitionEntriesViaBatch(projectRoot, state, screenshotPat
     const results = await solver.recognizeAndSolveHandRegionsFromImage(
         handRegions,
         screenshotPath,
-        createRecognitionOptions(projectRoot, cardCount, allowJokers)
+        createRecognitionOptions(projectRoot, cardCount, allowJokers, recognitionBackend)
     );
     const totalDurationMs = Date.now() - startedAt;
     const firstRecognition = results[0] && results[0].recognized ? results[0].recognized : {};
@@ -312,13 +359,13 @@ async function buildRecognitionEntriesViaBatch(projectRoot, state, screenshotPat
     };
 }
 
-async function buildRecognitionEntriesWithWorkerPool(projectRoot, state, screenshotPath, handRegions, cardCount, allowJokers) {
+async function buildRecognitionEntriesWithWorkerPool(projectRoot, state, screenshotPath, handRegions, cardCount, allowJokers, recognitionBackend) {
     if (handRegions.length <= 1 || !Worker) {
-        return buildRecognitionEntriesSequential(projectRoot, state, screenshotPath, handRegions, cardCount, allowJokers);
+        return buildRecognitionEntriesSequential(projectRoot, state, screenshotPath, handRegions, cardCount, allowJokers, recognitionBackend);
     }
 
     const jobs = handRegions.map(function (handRegion, index) {
-        return createJobPayload(projectRoot, state, screenshotPath, handRegion, index, cardCount, allowJokers);
+        return createJobPayload(projectRoot, state, screenshotPath, handRegion, index, cardCount, allowJokers, recognitionBackend);
     });
     const cpuCount = Math.max(1, Array.isArray(os.cpus()) ? os.cpus().length : 1);
     const workerCount = Math.min(jobs.length, MAX_HAND_REGIONS, cpuCount);
@@ -340,19 +387,19 @@ async function buildRecognitionEntriesWithWorkerPool(projectRoot, state, screens
     };
 }
 
-async function buildRecognitionEntries(projectRoot, state, screenshotPath, handRegions, cardCount, allowJokers) {
+async function buildRecognitionEntries(projectRoot, state, screenshotPath, handRegions, cardCount, allowJokers, recognitionBackend) {
     if (handRegions.length <= 1) {
-        return buildRecognitionEntriesSequential(projectRoot, state, screenshotPath, handRegions, cardCount, allowJokers);
+        return buildRecognitionEntriesSequential(projectRoot, state, screenshotPath, handRegions, cardCount, allowJokers, recognitionBackend);
     }
 
     let batchError = null;
     try {
-        return await buildRecognitionEntriesViaBatch(projectRoot, state, screenshotPath, handRegions, cardCount, allowJokers);
+        return await buildRecognitionEntriesViaBatch(projectRoot, state, screenshotPath, handRegions, cardCount, allowJokers, recognitionBackend);
     } catch (error) {
         batchError = error;
     }
 
-    const fallbackResult = await buildRecognitionEntriesWithWorkerPool(projectRoot, state, screenshotPath, handRegions, cardCount, allowJokers);
+    const fallbackResult = await buildRecognitionEntriesWithWorkerPool(projectRoot, state, screenshotPath, handRegions, cardCount, allowJokers, recognitionBackend);
     fallbackResult.fallbackReason = batchError ? String(batchError.message || batchError) : null;
     if (batchError) {
         fallbackResult.executionMode += "-after-batch-fallback";
@@ -374,34 +421,43 @@ async function runWorkerThreadTask() {
             job.handRegion,
             job.regionIndex || 0,
             job.cardCount,
-            job.allowJokers
+            job.allowJokers,
+            job.recognitionBackend
         ));
     }
 
     return entries;
 }
 
-async function main() {
-    const args = parseArgs(process.argv.slice(2));
+async function runRecognitionRequest(rawArgs) {
+    const args = rawArgs || {};
     const projectRoot = path.resolve(__dirname, "..");
     const regionFile = path.resolve(projectRoot, args["region-file"] || "./screen-recognition/ui-state.json");
     const outputPath = args.output ? path.resolve(projectRoot, args.output) : undefined;
-    const jsonOutPath = args["json-out"] ? path.resolve(projectRoot, args["json-out"]) : undefined;
+    const explicitScreenshotPath = args.screenshot ? path.resolve(projectRoot, args.screenshot) : undefined;
     const state = readRegionFile(regionFile);
     const handRegions = getHandRegionsFromState(state);
     const cardCount = Number(args["card-count"] || state.cardCount || 4);
     const allowJokers = parseBooleanFlag(args["allow-jokers"], state.jokerMode);
+    const recognitionBackend = args["recognition-backend"] ? String(args["recognition-backend"]).trim().toLowerCase() : undefined;
     const silent = parseBooleanFlag(args.silent, false);
     const generatePreviews = parseBooleanFlag(args["generate-previews"], !silent);
     const startedAt = Date.now();
-    const screenshotPath = await solver.capturePrimaryScreen(outputPath);
-    const recognitionEntries = await buildRecognitionEntries(projectRoot, state, screenshotPath, handRegions, cardCount, allowJokers);
+    const captureStartedAt = Date.now();
+    const screenshotPath = await resolveScreenshotPath(projectRoot, explicitScreenshotPath, outputPath);
+    const captureDurationMs = explicitScreenshotPath ? 0 : (Date.now() - captureStartedAt);
+    const recognitionStartedAt = Date.now();
+    const recognitionEntries = await buildRecognitionEntries(projectRoot, state, screenshotPath, handRegions, cardCount, allowJokers, recognitionBackend);
+    const recognitionDurationMs = Date.now() - recognitionStartedAt;
+    const previewStartedAt = Date.now();
     const results = await attachHandRegionPreviews(projectRoot, screenshotPath, recognitionEntries.entries, generatePreviews);
+    const previewDurationMs = generatePreviews ? (Date.now() - previewStartedAt) : 0;
     const acceleration = results.map(function (entry) {
         return entry && entry.result && entry.result.recognized
             ? (entry.result.recognized.acceleration || null)
             : null;
     }).find(Boolean) || null;
+    const resultFallbackReasons = collectResultFallbackReasons(results);
 
     const payload = {
         state: {
@@ -417,8 +473,12 @@ async function main() {
             workerCount: recognitionEntries.workerCount,
             regionCount: handRegions.length,
             previewsGenerated: generatePreviews,
-            fallbackReason: recognitionEntries.fallbackReason || null,
+            fallbackReason: mergeFallbackReasons(recognitionEntries.fallbackReason, resultFallbackReasons),
             acceleration: acceleration,
+            captureSource: explicitScreenshotPath ? "external" : "internal",
+            captureDurationMs: captureDurationMs,
+            recognitionDurationMs: recognitionDurationMs,
+            previewDurationMs: previewDurationMs,
             durationMs: Date.now() - startedAt
         },
         results: results,
@@ -440,6 +500,16 @@ async function main() {
         })
     };
 
+    return payload;
+}
+
+async function main() {
+    const args = parseArgs(process.argv.slice(2));
+    const projectRoot = path.resolve(__dirname, "..");
+    const jsonOutPath = args["json-out"] ? path.resolve(projectRoot, args["json-out"]) : undefined;
+    const silent = parseBooleanFlag(args.silent, false);
+    const payload = await runRecognitionRequest(args);
+
     const jsonText = JSON.stringify(payload, null, 2);
     if (jsonOutPath) {
         fs.mkdirSync(path.dirname(jsonOutPath), { recursive: true });
@@ -451,10 +521,12 @@ async function main() {
 }
 
 if (isMainThread) {
-    main().catch(function (error) {
-        process.stderr.write(String(error && error.stack ? error.stack : error) + "\n");
-        process.exitCode = 1;
-    });
+    if (require.main === module) {
+        main().catch(function (error) {
+            process.stderr.write(String(error && error.stack ? error.stack : error) + "\n");
+            process.exitCode = 1;
+        });
+    }
 } else {
     runWorkerThreadTask().then(function (entries) {
         parentPort.postMessage({
@@ -468,3 +540,7 @@ if (isMainThread) {
         });
     });
 }
+
+module.exports = {
+    runRecognitionRequest: runRecognitionRequest
+};

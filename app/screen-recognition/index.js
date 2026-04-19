@@ -1973,6 +1973,35 @@ function buildRecognitionResult(recognizer, screenshotPath, cards, overrides) {
     });
 }
 
+function formatRecognitionExecutionError(error) {
+    var text = String(error && error.message ? error.message : error || "").replace(/\s+/g, " ").trim();
+    if (text.length > 420) {
+        return text.slice(0, 417) + "...";
+    }
+    return text;
+}
+
+function mergeFallbackReasonText(existingReason, nextReason) {
+    return [existingReason, nextReason].filter(Boolean).join("; ") || null;
+}
+
+function withRecognitionFallbackReason(result, fallbackReason) {
+    if (!result || !fallbackReason) {
+        return result;
+    }
+
+    return Object.assign({}, result, {
+        fallbackReason: mergeFallbackReasonText(result.fallbackReason, fallbackReason)
+    });
+}
+
+function buildRecognitionFailureError(context, errors) {
+    var details = (errors || []).map(function (error) {
+        return formatRecognitionExecutionError(error);
+    }).filter(Boolean);
+    return new Error(details.length > 0 ? (context + ": " + details.join(" | ")) : context);
+}
+
 function escapePowerShellSingleQuotedString(value) {
     return value.replace(/'/g, "''");
 }
@@ -2612,11 +2641,32 @@ function createHybridScreenCardRecognizer(config) {
             fallbackReason: null,
             recognizeImage: async function (screenshotPath) {
                 var normalizedScreenshotPath = normalizeScreenshotPath(normalizedConfig.baseDir, screenshotPath);
-                var results = await Promise.all([
+                var results = await Promise.allSettled([
                     jsRecognizer.recognizeImage(normalizedScreenshotPath),
                     pythonRecognizer.recognizeImage(normalizedScreenshotPath)
                 ]);
-                return mergeBackendRecognitionResults(this, normalizedScreenshotPath, results[0], results[1]);
+                var jsSucceeded = results[0].status === "fulfilled";
+                var pythonSucceeded = results[1].status === "fulfilled";
+
+                if (jsSucceeded && pythonSucceeded) {
+                    return mergeBackendRecognitionResults(this, normalizedScreenshotPath, results[0].value, results[1].value);
+                }
+
+                if (jsSucceeded) {
+                    return withRecognitionFallbackReason(
+                        results[0].value,
+                        "Python OpenCV failed, fallback to javascript: " + formatRecognitionExecutionError(results[1].reason)
+                    );
+                }
+
+                if (pythonSucceeded) {
+                    return withRecognitionFallbackReason(
+                        results[1].value,
+                        "JavaScript recognizer failed, fallback to python-opencv: " + formatRecognitionExecutionError(results[0].reason)
+                    );
+                }
+
+                throw buildRecognitionFailureError("Hybrid recognizer failed", [results[0].reason, results[1].reason]);
             },
             recognizeScreen: async function (options) {
                 var capturePath = await capturePrimaryScreen(options && options.outputPath);
@@ -2633,7 +2683,7 @@ async function recognizeHybridBatch(recognizers, screenshotPath) {
         return [];
     }
 
-    var batchResults = await Promise.all([
+    var batchResults = await Promise.allSettled([
         recognizeJavaScriptBatch(recognizers.map(function (recognizer) {
             return recognizer.jsRecognizer;
         }), screenshotPath),
@@ -2641,17 +2691,39 @@ async function recognizeHybridBatch(recognizers, screenshotPath) {
             return recognizer.pythonRecognizer;
         }), screenshotPath)
     ]);
-    var jsResults = batchResults[0];
-    var pythonResults = batchResults[1];
 
-    return recognizers.map(function (recognizer, index) {
-        return mergeBackendRecognitionResults(
-            recognizer,
-            normalizeScreenshotPath(recognizer.config.baseDir, screenshotPath),
-            jsResults[index],
-            pythonResults[index]
-        );
-    });
+    var jsSucceeded = batchResults[0].status === "fulfilled";
+    var pythonSucceeded = batchResults[1].status === "fulfilled";
+
+    if (jsSucceeded && pythonSucceeded) {
+        var jsResults = batchResults[0].value;
+        var pythonResults = batchResults[1].value;
+
+        return recognizers.map(function (recognizer, index) {
+            return mergeBackendRecognitionResults(
+                recognizer,
+                normalizeScreenshotPath(recognizer.config.baseDir, screenshotPath),
+                jsResults[index],
+                pythonResults[index]
+            );
+        });
+    }
+
+    if (jsSucceeded) {
+        var fallbackReason = "Python OpenCV batch failed, fallback to javascript: " + formatRecognitionExecutionError(batchResults[1].reason);
+        return batchResults[0].value.map(function (result) {
+            return withRecognitionFallbackReason(result, fallbackReason);
+        });
+    }
+
+    if (pythonSucceeded) {
+        var pythonFallbackReason = "JavaScript batch recognizer failed, fallback to python-opencv: " + formatRecognitionExecutionError(batchResults[0].reason);
+        return batchResults[1].value.map(function (result) {
+            return withRecognitionFallbackReason(result, pythonFallbackReason);
+        });
+    }
+
+    throw buildRecognitionFailureError("Hybrid batch recognizer failed", [batchResults[0].reason, batchResults[1].reason]);
 }
 
 async function createScreenCardRecognizer(config) {
